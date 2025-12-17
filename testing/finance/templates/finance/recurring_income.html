@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recurring Income - Finance Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'finance/styles.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<header>{% include 'core/header.html' %}</header>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'finance/sidebar.html' %}
+
+{% if messages %}
+    <div id="popup-messages">
+        {% for message in messages %}
+        <div class="popup-message {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<main style="flex: 1;">
+    <h1 class="page-title">🔁 Recurring Income</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        
+        <button type="submit">Add Recurring Income</button>
+    </form>
+
+    <h2 style="text-align: center;">Current Recurring Income</h2>
+    <table>
+        <tr>
+            <th>Source</th>
+            <th>Amount</th>
+            <th>Frequency</th>
+            <th>Category</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Actions</th>
+        </tr>
+        {% for inc in incomes %}
+        <tr>
+            <td>{{ inc.source }}</td>
+            <td>{{ inc.amount }}</td>
+            <td>{{ inc.frequency|title }}</td>
+            <td>{{ inc.category }}</td>
+            <td>{{ inc.start_date }}</td>
+            <td>{{ inc.end_date|default:"—" }}</td>
+            <td>
+                <div class="action-buttons">
+                    <button type="button" class="edit-button" onclick="toggleEditForm('inc-{{ inc.id }}')">✏️ Edit</button>
+                    <form method="POST" action="{% url 'delete_recurring_income' inc.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-button" onclick="return confirm('Delete this income?')">🗑️ Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        <tr id="inc-{{ inc.id }}" style="display:none; background:#222;">
+            <td colspan="7">
+                <form method="POST" action="{% url 'edit_recurring_income' inc.id %}">
+                    {% csrf_token %}
+                    <input type="text" name="source" value="{{ inc.source }}" required>
+                    <input type="number" step="0.01" name="amount" value="{{ inc.amount }}" required>
+                    <select name="frequency" required>
+                        {% for val,label in inc.FREQUENCY_CHOICES %}
+                            <option value="{{ val }}" {% if inc.frequency == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="category" required>
+                        {% for val,label in inc.CATEGORY_CHOICES %}
+                            <option value="{{ val }}" {% if inc.category == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="date" name="start_date" value="{{ inc.start_date|date:'Y-m-d' }}" required>
+                    <input type="date" name="end_date" value="{{ inc.end_date|date:'Y-m-d' }}">
+                    <button type="submit">💾 Save</button>
+                    <button type="button" onclick="toggleEditForm('inc-{{ inc.id }}')" class="delete-button">❌ Cancel</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="chart-placeholder">
+        <canvas id="recIncomeChart"></canvas>
+    </div>
+</main>
+</div>
+<footer>{% include 'core/footer.html' %}</footer>
+
+<script>
+    //prediction of income
+    document.addEventListener('DOMContentLoaded', function() {
+        const nameField = document.getElementById('id_source');
+        const categoryField = document.getElementById('id_category');
+
+        nameField.addEventListener('blur', function() {
+            const text = nameField.value.trim();
+            if (text.length > 0) {
+                fetch("{% url 'predict_income_category' %}?text=" + encodeURIComponent(text))
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.category) {
+                            for (let option of categoryField.options) {
+                                if (option.text === data.category || option.value === data.category) {
+                                    option.selected = true;
+                                    break;
+                                }
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Prediction error:", err));
+            }
+        });
+    });
+    //---------------------------------------------------------------------------
+    //hidden form
+    function toggleEditForm(id) {
+        let row = document.getElementById(id);
+        row.style.display = (row.style.display === "none") ? "table-row" : "none";
+    }
+    //chart
+    function getRecIncomeThemeColors() {
+        const isDark = document.body.classList.contains("dark");
+        return {
+            text: isDark ? "#E0E0E0" : "#222"
+        };
+    }
+
+    function createRecIncomeChart() {
+        const ctx = document.getElementById('recIncomeChart').getContext("2d");
+        const colors = getRecIncomeThemeColors();
+
+        return new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: {{ categories|safe }},
+                datasets: [{
+                    data: {{ chart_data|safe }},
+                    backgroundColor: [
+                        '#8E44AD', '#E67E22', '#077707ff', '#0e108aff',
+                        '#a91606ff', '#07483bff', '#d3ca25ff', '#d2227aff'
+                    ]
+                }]
+            },
+            options: {
+                plugins: { 
+                    legend: { 
+                        labels: { 
+                            color: colors.text, 
+                            font: { size: 14 } 
+                        } 
+                    },
+                    title: {                          // ← Added title
+                        display: true,
+                        text: "🔁 Recurring Income Distribution by Categories",
+                        color: colors.text,
+                        font: { size: 25, weight: 'bold' },
+                        padding: { top: 10, bottom: 20 }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // initialize
+    let recIncomeChart = createRecIncomeChart();
+
+    // re-render on theme change
+    document.addEventListener("themeChanged", () => {
+        recIncomeChart.destroy();
+        recIncomeChart = createRecIncomeChart();
+    });
+
+</script>
+</body>
+</html>

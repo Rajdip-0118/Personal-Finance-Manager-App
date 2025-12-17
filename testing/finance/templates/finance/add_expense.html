@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Expense - Finance Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'finance/styles.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<header>{% include 'core/header.html' %}</header>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'finance/sidebar.html' %}
+
+<!-- Django Messages -->
+    {% if messages %}
+    <div id="popup-messages">
+        {% for message in messages %}
+        <div class="popup-message {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+<main style="flex: 1;">
+    <h1 class="page-title">💸 Add Expense</h1>
+    
+    <!-- Add Expense Form -->
+    <form method="POST" style="margin-bottom:20px;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Add Expense</button>
+    </form>
+    <h2 style="text-align: center;">Already have a csv of Expenses to add? Upload it here ⬇️</h2>
+    <form method="POST" enctype="multipart/form-data" action="{% url 'upload_expense_csv' %}" style="margin-bottom:20px; align-items: center;">
+        {% csrf_token %}
+            <label for="csv_file">Upload Expense CSV (MAX limit: 1MB)</label>
+            <input type="file" name="csv_file" accept=".csv" required>
+            <button type="submit">Upload</button>
+    </form>
+
+    <!-- Expense Chart -->
+    <div class="chart-placeholder">
+        <canvas id="expenseChart"></canvas>
+    </div>
+</main>
+</div>
+
+<footer>{% include 'core/footer.html' %}</footer>
+
+<script>
+//prediction of expenses
+document.addEventListener('DOMContentLoaded', function() {
+    const nameField = document.getElementById('id_name');
+    const categoryField = document.getElementById('id_category');
+
+    nameField.addEventListener('blur', function() {
+        const text = nameField.value.trim();
+        if (text.length > 0) {
+            fetch("{% url 'predict_expense_category' %}?text=" + encodeURIComponent(text))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.category) {
+                        for (let option of categoryField.options) {
+                            if (option.text === data.category || option.value === data.category) {
+                                option.selected = true;
+                                break;
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error("Prediction error:", err));
+        }
+    });
+});
+//---------------------------------------------------------------------------
+
+function getThemeColors() {
+    const isDark = document.body.classList.contains("dark");
+    return {
+        text: isDark ? "#E0E0E0" : "#222",
+        backgroundColors: [
+            isDark ? "#3498DB" : "#2980B9",
+            isDark ? "#4e1365" : "#8E44AD",
+            isDark ? "#E74C3C" : "#C0392B",
+            isDark ? "#f6cc25" : "#F39C12",
+            isDark ? "#5bc515" : "#27AE60",
+            isDark ? "#E67E22" : "#D35400",
+            isDark ? "#34495E" : "#95A5A6",
+            isDark ? "#FF69B4" : "#E84393",
+            isDark ? "#8E44AD" : "#9B59B6",
+            isDark ? "#a01670" : "#C2185B"
+        ]
+    };
+}
+
+function createExpenseChart() {
+    const ctxExpense = document.getElementById('expenseChart').getContext("2d");
+    const colors = getThemeColors();
+
+    return new Chart(ctxExpense, {
+        type: 'doughnut',
+        data: {
+            labels: {{ categories|safe }},
+            datasets: [{
+                data: {{ chart_data|safe }},
+                backgroundColor: colors.backgroundColors
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { 
+                    labels: { 
+                        color: colors.text, 
+                        font: { size: 14 } 
+                    } 
+                },
+                title: {                        // ← Added header
+                    display: true,
+                    text: "💸 Expense Breakdown by Categories",
+                    color: colors.text,
+                    font: { size: 25, weight: 'bold' },
+                    padding: { top: 10, bottom: 20 }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+// initialize
+let expenseChart = createExpenseChart();
+
+// if theme switches dynamically, destroy and recreate
+document.addEventListener("themeChanged", () => {
+    expenseChart.destroy();
+    expenseChart = createExpenseChart();
+});
+</script>
+
+</body>
+</html>

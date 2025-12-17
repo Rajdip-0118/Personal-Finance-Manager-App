@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Investments</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'investment/theme.css' %}">
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+    <!-- Popup Messages -->
+    <div id="popup-messages">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="popup-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+<header>
+    {% include 'core/header.html' %}
+</header>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'investment/sidebar.html' %}
+<main style="flex: 1;">
+    <h1 class="page-title">📃 My Investments</h1>
+
+        <!-- Manage Goals Card -->
+            <div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+                <h2>⚙️ Manage Investments</h2>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+
+                    
+
+                    <!-- Filters inline -->
+                    <label style="display:flex; align-items:center; gap:4px; margin-left:10px;">
+                        <input type="radio" name="filter" value="active" id="filter-active"
+                            {% if filter_type == 'active' %}checked{% endif %}
+                            onchange="applyFilter(this.value)"> Active Investments
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px;">
+                        <input type="radio" name="filter" value="completed" id="filter-completed"
+                            {% if filter_type == 'completed' %}checked{% endif %}
+                            onchange="applyFilter(this.value)"> Completed Investments
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px;">
+                        <input type="radio" name="filter" value="all" id="filter-all"
+                            {% if not filter_type or filter_type == 'all' %}checked{% endif %}
+                            onchange="applyFilter(this.value)"> All Investments
+                    </label>
+                    <!-- Add New Investment Button -->
+                    <a href="{% url 'add_investment' %}"><button>➕ Add New Investment</button></a>
+                    {% comment %} <!-- Delete Selected Investments -->
+                    <form id="delete-selected-form" action="{% url 'delete_selected_investments' %}" method="post" style="margin:0; padding:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="selected_ids" id="selected-ids">
+                        <button type="submit" class="delete-button" onclick="return confirm('Delete selected investments (refund balances)?')">🗑️ Delete Selected Investments</button>
+                    </form> {% endcomment %}
+
+                    <!-- Delete All Investments -->
+                    <form action="{% url 'delete_all_investments' %}" method="post" style="margin:0; padding:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-button" onclick="return confirm('Delete all investments (refund balances)?')">🗑️ Delete All Investments</button>
+                    </form>
+
+                </div>
+            </div>
+
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Frequency</th>
+                <th>Expected Return (%)</th>
+                <th>Actions</th>
+            </tr>
+            {% for inv in page_obj.object_list %}
+            <tr {% if inv.status == 'Completed' %}style="background-color: #198754; color: #e8f5e9;"{% endif %}>
+                <td data-label="Name">{{ inv.name }}</td>
+                <td data-label="Type">{{ inv.investment_type }}</td>
+                <td data-label="Amount">{{ user_currency }}{{ inv.amount }}</td>
+                <td data-label="Start">{{ inv.start_date|date:"M. j, Y" }}</td>
+                <td data-label="End">{{ inv.end_date|default:"-" }}</td>
+                <td data-label="Frequency">{{ inv.frequency|default:"-" }}</td>
+                <td data-label="Expected Return (%)">
+                    {% if inv.expected_return %}
+                        {{ inv.expected_return }}%
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td data-label="Actions">
+                    <a href="{% url 'edit_investment' inv.id %}">
+                        <button class="edit-button">✏️ Edit</button>
+                    </a>
+                    <form action="{% url 'delete_investment' inv.id %}" method="post" style="display:inline; margin: 0; padding: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this investment?');">
+                            🗑️ Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8">No investments found.</td></tr>
+            {% endfor %}
+
+        </table>
+
+        <!-- Pagination -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:nowrap; gap:15px;">
+                <div style="white-space:nowrap; font-weight:bold; color:var(--text-color);">
+                    <h2>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</h2>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                            <button>« Previous</button>
+                        </a>
+                    {% else %}
+                        <button disabled>« Previous</button>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <button class="edit-button" disabled>{{ num }}</button>
+                        {% else %}
+                            <a href="?page={{ num }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                                <button>{{ num }}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                            <button>Next »</button>
+                        </a>
+                    {% else %}
+                        <button disabled>Next »</button>
+                    {% endif %}
+                </div>
+            </div>
+</main>
+</div>
+<footer>
+    {% include 'core/footer.html' %}
+</footer>
+<script>
+    // Apply filter function
+        function applyFilter(value) {
+                    const params = new URLSearchParams(window.location.search);
+                    if(value === 'all') {
+                        params.delete('filter');
+                    } else {
+                        params.set('filter', value);
+                    }
+                    params.set('page', 1); // reset to first page
+                    window.location.search = params.toString();
+                }
+</script>
+</body>
+</html>

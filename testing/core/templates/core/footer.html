@@ -1,0 +1,49 @@
+<!-- Footer -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Finance App Footer</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/footer.css' %}">
+</head>
+<body> 
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-section features-section">
+            <h3>📊 Features</h3>
+            <a href="{% url 'expense_log' %}">💰 Expense Tracking</a>
+            <a href="{% url 'income_history' %}">💸 Income Overview</a>
+            <a href="{% url 'budget_list' %}">📈 Budget Planning</a>
+            <a href="{% url 'savings_dashboard' %}">💼 Savings Management</a>
+            <a href="{% url 'investment_portfolio' %}">📈 Investment Portfolio</a>
+        </div>
+        <div class="footer-section">
+            <h3>🤝 Contact Support</h3>
+            <p>💸 Finance App Manager HQ</p>
+            <p>📍 Kolkata , India</p>
+            <p>📞 +91 9876543210</p>
+            <p>✉️ support@financeapp.com</p>
+        </div>
+        <div class="footer-section">
+            <h3>🎯 Communication Address</h3>
+            <p>📍 Batanagar, Kolkata-700141</p>
+            <p>🏡 Maheshtala Municipality</p>
+            <p> Near 🚂 Nangi Railway Station</p>
+        </div>
+        <div class="footer-section">
+            <h3>🔗 Quick Access</h3>
+            <a href="{% url 'add_income' %}">➕ Add Income</a>
+            <a href="{% url 'add_expense' %}">➖ Add Expense</a>
+            <a href="{% url 'privacy' %}">🔒 Privacy Policy</a>
+            <a href="{% url 'terms' %}">📜 Terms of Use</a>
+        </div>
+        
+    </div>
+    <div class="footer-bottom">
+        &copy; 2025 Finance App Manager. All rights reserved.
+    </div>
+</footer>
+</body>
+</html>

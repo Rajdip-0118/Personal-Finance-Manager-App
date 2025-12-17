@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savings Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'savings/styles.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+    <!-- Popup Messages -->
+    <div id="popup-messages">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="popup-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <header>
+        {% include 'core/header.html' %}
+    </header>
+
+    <div style="display: flex; min-height: calc(100vh - 100px);">
+        {% include 'savings/sidebar.html' %}
+        <main style="flex: 1;">
+            <h1 class="page-title">💰 Savings Goals</h1>
+            <!-- Overall Goals Summary -->
+            <div class="card" style="margin-bottom:20px; padding:20px;">
+                <h2 style="text-align:center;">📊 Overall Goals Summary</h2>
+                <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap;">
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Total Goals</h3>
+                        <p style="font-size:1.5em;">{{ total_goals }}</p>
+                    </div>
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Total Target</h3>
+                        <p style="font-size:1.5em; color:#c97610;">{{ user_currency }}{{ total_target }}</p>
+                    </div>
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Total Current</h3>
+                        <p style="font-size:1.5em; color:#00BFA6;">{{ user_currency }}{{ total_current }}</p>
+                    </div>
+                    <div style="margin:10px; text-align:center;">
+                        <h3>💰 Accumulated Balance</h3>
+                        {% if accumulated_balance > 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:green;">+{{ user_currency }}{{ accumulated_balance|floatformat:2 }}</p>
+                        {% elif accumulated_balance < 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:red;">{{ user_currency }}{{ accumulated_balance|floatformat:2 }}</p>
+                        {% else %}
+                            <p style="font-size:1.5em; font-weight:bold; color:gray;">{{ user_currency }}{{ accumulated_balance|floatformat:2 }}</p>
+                        {% endif %}
+                    </div>
+                    <div style="margin:10px; text-align:center;">
+                        <h3>📅 Current Month Balance</h3>
+                        {% if current_balance > 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:green;">+{{ user_currency }}{{ current_balance|floatformat:2 }}</p>
+                        {% elif current_balance < 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:red;">{{ user_currency }}{{ current_balance|floatformat:2 }}</p>
+                        {% else %}
+                            <p style="font-size:1.5em; font-weight:bold; color:gray;">{{ user_currency }}{{ current_balance|floatformat:2 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Overall Progress Bar -->
+                <div style="margin-top:20px;">
+                    <h3 style="text-align:center;">Overall Progress</h3>
+                    <div style="background:#e0e0e0; border-radius:10px; overflow:hidden; height:25px; width:100%;">
+                        <div style="height:100%; width:{{ overall_progress }}%;
+                                    background:{% if overall_progress < 30 %}#ff4d4d
+                                               {% elif overall_progress < 70 %}#ffcc00
+                                               {% else %}#00cc66{% endif %};
+                                    display:flex; align-items:center; justify-content:center;
+                                    font-weight:bold; color:white; transition:width 0.5s ease;">
+                            {{ overall_progress|floatformat:2 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Goals Card -->
+            <div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+                <h2>⚙️ Manage Saving Goals</h2>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+
+                    
+
+                    <!-- Filters inline -->
+                    <label style="display:flex; align-items:center; gap:4px; margin-left:10px;">
+                        <input type="radio" name="filter" value="active" id="filter-active"
+                            {% if filter_type == 'active' %}checked{% endif %}
+                            onchange="applyFilter(this.value)"> Active Goals
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px;">
+                        <input type="radio" name="filter" value="completed" id="filter-completed"
+                            {% if filter_type == 'completed' %}checked{% endif %}
+                            onchange="applyFilter(this.value)"> Completed Goals
+                    </label>
+                    <label style="display:flex; align-items:center; gap:4px;">
+                        <input type="radio" name="filter" value="all" id="filter-all"
+                            {% if not filter_type or filter_type == 'all' %}checked{% endif %}
+                            onchange="applyFilter(this.value)"> All Goals
+                    </label>
+                    <!-- Add New Goal Button -->
+                    <a href="{% url 'add_goal' %}"><button>➕ Add New Goal</button></a>
+                    <!-- Delete Selected Goals -->
+                    <form id="delete-selected-form" action="{% url 'delete_selected_goals' %}" method="post" style="margin:0; padding:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="selected_ids" id="selected-ids">
+                        <button type="submit" class="delete-button" onclick="return confirm('Delete selected saving goals (refund balances)?')">🗑️ Delete Selected Goals</button>
+                    </form>
+
+                    <!-- Delete All Goals -->
+                    <form action="{% url 'delete_all_goals' %}" method="post" style="margin:0; padding:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-button" onclick="return confirm('Delete all saving goals (refund balances)?')">🗑️ Delete All Goals</button>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- Goals Table -->
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all"></th>
+                        <th>Goal</th>
+                        <th>Target</th>
+                        <th>Current</th>
+                        <th>Progress</th>
+                        <th>Deadline</th>
+                        <th>Probability</th>
+                        <th>Suggested Deadline</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for goal in goals %}
+                    <tr {% if goal.current_amount == goal.target_amount %} style="background-color: #198754; color: #e8f5e9;" {% endif %}>
+                        <td style="text-align:center;">
+                            <input type="checkbox" class="row-checkbox" data-goal-id="{{ goal.id }}">
+                        </td>
+                        <td>{{ goal.name }}</td>
+                        <td>{{ user_currency }}{{ goal.target_amount }}</td>
+                        <td>{{ user_currency }}{{ goal.current_amount }}</td>
+
+                        <!-- Progress Display -->
+                        <td>
+                            <div class="progress-container">
+                                <div class="progress-bar 
+                                    {% if goal.progress < 30 %}progress-low
+                                    {% elif goal.progress < 70 %}progress-medium
+                                    {% else %}progress-high{% endif %}"
+                                    style="width: {{ goal.progress }}%">
+                                </div>
+                            </div>
+                            <div style="text-align:center; font-weight:bold; margin-top:4px;">
+                                {{ goal.progress_display }}
+                            </div>
+                        </td>
+
+                        <!-- Deadline -->
+                        <td>{{ goal.deadline|default:"N/A" }}</td>
+
+                        <!-- Probability -->
+                        <td style="text-align:center; font-weight:bold;">
+                            
+                            {% if goal.is_numeric_prob %}
+                                {{ goal.probability }}%
+                            {% else %}
+                                {{ goal.probability }}
+                            {% endif %}
+                        </td>
+
+
+
+                        <!-- Suggested Deadline -->
+                        <td style="text-align:center;">
+                            {{ goal.suggested_deadline }}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="action-buttons">
+                            <a href="{% url 'edit_goal' goal.id %}">
+                                <button class="edit-button">Edit</button>
+                            </a>
+                            <form method="post" action="{% url 'delete_goal' goal.id %}" style="display:inline; margin:0; padding:0;" 
+                                onsubmit="return confirm('Delete {{ goal.name }} (refund balances)?');">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-button" style="display:inline; margin:0; padding:0; height:40px;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align:center;">No savings goals yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:nowrap; gap:15px;">
+                <div style="white-space:nowrap; font-weight:bold; color:var(--text-color);">
+                    <h2>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</h2>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                            <button>« Previous</button>
+                        </a>
+                    {% else %}
+                        <button disabled>« Previous</button>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <button class="edit-button" disabled>{{ num }}</button>
+                        {% else %}
+                            <a href="?page={{ num }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                                <button>{{ num }}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if filter_type %}&filter={{ filter_type }}{% endif %}">
+                            <button>Next »</button>
+                        </a>
+                    {% else %}
+                        <button disabled>Next »</button>
+                    {% endif %}
+                </div>
+            </div>
+
+
+            <!-- Progress Chart -->
+            <div class="card">
+                <h2 style="text-align:center;">📊 Goal Progress Overview</h2>
+                <canvas id="progressChart"></canvas>
+                <div class="chart-legend" style="text-align: center;">
+                    <span class="legend-item"><span class="legend-box" style="background-color: #ff4d4d;"></span> Low (<30%)</span>
+                    <span class="legend-item"><span class="legend-box" style="background-color: #ffcc00;"></span> Medium (30–70%)</span>
+                    <span class="legend-item"><span class="legend-box" style="background-color: #00cc66;"></span> High (≥70%)</span>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <footer>{% include 'core/footer.html' %}</footer>
+
+    <script>
+        //Apply filter function
+        function applyFilter(value) {
+                    const params = new URLSearchParams(window.location.search);
+                    if(value === 'all') {
+                        params.delete('filter');
+                    } else {
+                        params.set('filter', value);
+                    }
+                    params.set('page', 1); // reset to first page
+                    window.location.search = params.toString();
+                }
+        // Delete selected goals (refund)
+        document.getElementById("delete-selected-form").addEventListener("submit", function (e) {
+            const ids = Array.from(document.querySelectorAll(".row-checkbox:checked")).map(cb => cb.dataset.goalId);
+            document.getElementById("selected-ids").value = ids.join(",");
+        });
+
+        // Select/Deselect all checkboxes
+        document.getElementById("select-all").addEventListener("change", function() {
+            document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
+        });
+
+        // Chart.js
+        const labels = {{ labels|safe }};
+        const progress = {{ progress|safe }};
+        const backgroundColors = progress.map(val => {
+            if (val < 30) return 'rgba(255, 77, 77, 0.7)';
+            if (val < 70) return 'rgba(255, 204, 0, 0.7)';
+            return 'rgba(0, 204, 102, 0.7)';
+        });
+        const borderColors = progress.map(val => {
+            if (val < 30) return 'rgba(204, 0, 0, 1)';
+            if (val < 70) return 'rgba(255, 153, 0, 1)';
+            return 'rgba(0, 153, 77, 1)';
+        });
+
+        const ctx = document.getElementById('progressChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Progress (%)',
+                        data: progress,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (c) => c.raw + "%" } },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (val) => val + '%'
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, ticks: { callback: val => val + "%" } }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+    </script>
+</body>
+</html>

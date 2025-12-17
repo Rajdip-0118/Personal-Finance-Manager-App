@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investment Portfolio</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'investment/theme.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+  <!-- Popup Messages -->
+    <div id="popup-messages">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="popup-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+<header>
+    {% include 'core/header.html' %}
+</header>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'investment/sidebar.html' %}
+<main style="flex: 1;">
+    <h1 class="page-title">📊 Investment Portfolio</h1>
+
+    {% comment %} <!-- ✅ Summary Cards -->
+    <div class="summary-container">
+      <div class="summary-box invested-box">
+        <h3>Total Invested</h3>
+      <p>{{ user_currency }}{{ total_invested }}</p>
+      </div>
+      <div class="summary-box estimated-box">
+        <h3>Estimated Value</h3>
+        <p>{{ user_currency }}{{ total_estimated_value }}</p>
+      </div>
+      <div class="summary-box profit-box">
+        <h3>Total Profit / Loss</h3>
+        <p>{{ user_currency }}{{ total_profit }}</p>
+      </div>
+    </div> {% endcomment %}
+    <!-- Overall Investments Summary -->
+            <div class="card" style="margin-bottom:20px; padding:20px;">
+                <h2 style="text-align:center;">📊 Overall Investments Summary</h2>
+                <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap;">
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Total Investments</h3>
+                        <p style="font-size:1.5em; font-weight:bold;">{{ investments.count }}</p>
+                    </div>
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Total Invested Value</h3>
+                        <p style="font-size:1.5em; color:#c97610;">{{ user_currency }}{{ total_invested }}</p>
+                    </div>
+                    {% comment %} <div style="text-align:center; margin:10px;">
+                        <h3>Total Estimated Value</h3>
+                        <p style="font-size:1.5em; color:#00BFA6;">{{ user_currency }}{{ total_estimated_value }}</p>
+                    </div> {% endcomment %}
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Overall Estimated Value</h3>
+                        <p style="font-size:1.5em; color:#00BFA6;">{{ user_currency }}{{ total_overall_estimated }}</p>
+                    </div>
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Present Profit / Loss</h3>
+                        {% if total_profit > 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:green;">+{{ user_currency }}{{ total_profit|floatformat:2 }}</p>
+                        {% elif total_profit < 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:red;">{{ user_currency }}{{ total_profit|floatformat:2 }}</p>
+                        {% else %}
+                            <p style="font-size:1.5em; font-weight:bold; color:gray;">{{ user_currency }}0.00</p>
+                        {% endif %}
+                    </div>
+                    <div style="text-align:center; margin:10px;">
+                        <h3>Overall Estimated Profit / Loss</h3>
+                        {% if total_overall_profit > 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:green;">
+                                +{{ user_currency }}{{ total_overall_profit|floatformat:2 }}
+                            </p>
+                        {% elif total_overall_profit < 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:red;">
+                                {{ user_currency }}{{ total_overall_profit|floatformat:2 }}
+                            </p>
+                        {% else %}
+                            <p style="font-size:1.5em; font-weight:bold; color:gray;">
+                                {{ user_currency }}0.00
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+    <!-- ✅ Investment Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Expected Return</th>
+          <th>Estimated Value</th>
+          <th>Profit / Loss</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in investments %}
+        <tr>
+          <td>{{ i.name }}</td>
+          <td>{{ i.investment_type }}</td>
+          <td>{{ user_currency }}{{ i.amount }}</td>
+          <td>{{ i.expected_return }}%</td>
+          <td>{{ i.estimated_value_display }}</td>
+          <td>{{ i.profit_display }}</td>
+          <td>{{ i.start_date }}</td>
+          <td>{{ i.end_date|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8">No investments yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- 📈 Growth Over Time Chart -->
+    <section class="chart-section">
+      <h2 style="text-align: center;">📈 Growth Over Time (Invested vs Estimated)</h2>
+      <canvas id="growthChart" height="100"></canvas>
+    </section>
+
+    <!-- 📊 Category Comparison Chart -->
+    <section class="chart-section">
+      <h2 style="text-align: center;">📊 Category Comparison (Investment Type)</h2>
+
+      <!-- ✅ Custom Legend -->
+      <div class="chart-legend" style="justify-content: center;">
+        <span class="legend-item" style="--color:#007bff;">Stock</span>
+        <span class="legend-item" style="--color:#28a745;">Mutual Fund</span>
+        <span class="legend-item" style="--color:#ffc107;">FD</span>
+        <span class="legend-item" style="--color:#17a2b8;">RD</span>
+        <span class="legend-item" style="--color:#dc3545;">Bond</span>
+        <span class="legend-item" style="--color:#6610f2;">ETF</span>
+        <span class="legend-item" style="--color:#fd7e14;">Pension</span>
+        <span class="legend-item" style="--color:#20c997;">Gold</span>
+        <span class="legend-item" style="--color:#6f42c1;">Crypto</span>
+        <span class="legend-item" style="--color:#e83e8c;">Real Estate</span>
+        <span class="legend-item" style="--color:#adb5bd;">Other</span>
+      </div>
+
+      <canvas id="categoryChart" height="100"></canvas>
+    </section>
+  </main>
+</div>
+
+  <footer>
+    {% include 'core/footer.html' %}
+  </footer>
+
+  <script>
+  // Detect theme from <body> or data-theme attribute
+  const isDark = document.body.classList.contains('dark') || 
+                 document.documentElement.getAttribute('data-theme') === 'dark';
+
+  // Define theme colors
+  const axisColor = isDark ? '#e0e0e0' : '#333';
+  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+  const borderColor = isDark ? '#888' : '#333';
+
+  // --- 📈 Growth Over Time (Line Chart with 2 datasets) ---
+  const ctx1 = document.getElementById('growthChart').getContext('2d');
+  new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: {{ months|safe }},
+      datasets: [
+        {
+          label: 'Invested Amount ({{ user_currency }})',
+          data: {{ invested_amounts|safe }},
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0,123,255,0.2)',
+          fill: false,
+          borderWidth: 2,
+          tension: 0.4
+        },
+        {
+          label: 'Estimated Value ({{ user_currency }})',
+          data: {{ estimated_amounts|safe }},
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40,167,69,0.2)',
+          fill: false,
+          borderWidth: 2,
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { 
+          position: 'top',
+          labels: { color: axisColor }
+        },
+        title: { display: false }
+      },
+      scales: {
+        y: { 
+          beginAtZero: true,
+          ticks: { color: axisColor },
+          grid: { color: gridColor }
+        },
+        x: { 
+          ticks: { color: axisColor },
+          grid: { color: gridColor }
+        }
+      }
+    }
+  });
+
+  // --- 📊 Category Comparison (Bar Chart by Investment Type) ---
+  const ctx3 = document.getElementById('categoryChart').getContext('2d');
+
+  const categoryColors = {
+    "Stock": "#007bff",
+    "Mutual Fund": "#28a745",
+    "FD": "#ffc107",
+    "RD": "#17a2b8",
+    "Bond": "#dc3545",
+    "ETF": "#6610f2",
+    "Pension": "#fd7e14",
+    "Gold": "#20c997",
+    "Crypto": "#6f42c1",
+    "Real Estate": "#e83e8c",
+    "Other": "#adb5bd"
+  };
+
+  const labels = {{ category_labels|safe }};
+  const values = {{ category_values|safe }};
+  const bgColors = labels.map(label => categoryColors[label] || "#999");
+
+  new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '💰 Total Invested ({{ user_currency }})',
+        data: values,
+        backgroundColor: bgColors,
+        borderColor: borderColor,
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { 
+          display: false,
+          labels: { color: axisColor }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return '{{ user_currency }}' + context.raw.toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { color: axisColor },
+          grid: { color: gridColor }
+        },
+        x: {
+          ticks: { color: axisColor },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

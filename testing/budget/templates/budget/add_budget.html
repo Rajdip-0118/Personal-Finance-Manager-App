@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Budget</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'budget/styles.css' %}">
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<header>
+    {% include 'core/header.html' %}
+</header>
+<div id="popup-messages">
+  {% if messages %}
+      {% for message in messages %}
+          <div class="popup-message {{ message.tags }}">
+              {{ message }}
+          </div>
+      {% endfor %}
+  {% endif %}
+</div>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'budget/sidebar.html' %}
+<main style="flex: 1;">
+    <h1 class="page-title">
+        {% if edit_mode %}✏️ Edit Budget{% else %}➕ Add New Budget{% endif %}
+        {% if available_income %}
+        <p style="text-align:center; margin-top:5px; color:#E0E0E0;"><strong>Available Income for this period:</strong> {{ available_income }}</p>
+        {% endif %}
+    </h1>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">
+                {% if edit_mode %}💾 Update Budget{% else %}Save Budget{% endif %}
+            </button>
+        </form>
+
+        <div style="margin-top:20px;">
+            <a href="{% url 'budget_list' %}">
+                <button class="edit-button">Back to Budgets</button>
+            </a>
+        </div>
+    </div>
+</main>
+</div>
+
+<footer>
+    {% include 'core/footer.html' %}
+</footer>
+
+<script>
+</script>
+</body>
+</html>
+

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Expense Log - Finance Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'finance/styles.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<header>{% include 'core/header.html' %}</header>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'finance/sidebar.html' %}
+    {% if messages %}
+    <div id="popup-messages">
+        {% for message in messages %}
+        <div class="popup-message {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+<main style="flex: 1;">
+    <h1 class="page-title">💳 Expense Log</h1>
+    <!-- Forecast Summary -->
+    <div style="display:flex; gap:20px; margin:20px 0; flex-wrap:wrap;">
+        
+        <!-- Spent So Far -->
+        <div class="prediction-card glass"
+            style="--card-gradient: linear-gradient(135deg, rgba(20,71,66,0.5), rgba(0,144,12,0.5));">
+            <h3>💸 Spent So Far (This Month)</h3>
+            {% if spent_so_far_numeric %}
+                <p style="font-size:1.5em;">{{ user_currency }}{{ spent_so_far|floatformat:2 }}</p>
+            {% else %}
+                <p style="font-size:1.2em; font-style:italic;">{{ spent_so_far }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Expected Spend This Month -->
+        <div class="prediction-card glass"
+            style="--card-gradient: linear-gradient(135deg, rgba(247,151,30,0.45), rgba(225,184,2,0.45));">
+            <h3>📈 Expected Spend (This Month)</h3>
+            {% if current_month_expected_numeric %}
+                <p style="font-size:1.5em;">{{ user_currency }}{{ current_month_expected|floatformat:2 }}</p>
+            {% else %}
+                <p style="font-size:1.2em; font-style:italic;">{{ current_month_expected }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Expected Spend Next Month -->
+        <div class="prediction-card glass"
+            style="--card-gradient: linear-gradient(135deg, rgba(106,17,203,0.45), rgba(37,117,252,0.45));">
+            <h3>🔮 Expected Spend (Next Month)</h3>
+            {% if next_month_expected_numeric %}
+                <p style="font-size:1.5em;">{{ user_currency }}{{ next_month_expected|floatformat:2 }}</p>
+            {% else %}
+                <p style="font-size:1.2em; font-style:italic;">{{ next_month_expected }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Manage Expenses Card -->
+    <div class="card" style="padding:15px; border-radius:10px; margin:20px 0; display:flex; align-items:center; justify-content:space-between;">
+        <h2 style="margin:0;">⚙️ Manage Expenses</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <a href="{% url 'add_expense' %}">
+                <button type="button" class="edit-button" style="height:40px; padding:0 15px;">➕ Add New Expense</button>
+            </a>
+            <form id="delete-selected-form" action="{% url 'delete_selected_expenses' %}" method="post" style="margin:0; padding:0; background:transparent;">
+                {% csrf_token %}
+                <input type="hidden" name="selected_ids" id="selected-ids">
+                <button type="submit" class="delete-button" style="height:40px; padding:0 15px; margin:0;" onclick="return confirm('Delete selected expenses?')">🗑️ Delete Selected</button>
+            </form>
+            <form action="{% url 'bulk_delete_expense' %}" method="post" style="margin:0; padding:0; background:transparent;">
+                {% csrf_token %}
+                <button type="submit" class="delete-button" style="height:40px; padding:0 15px; margin:0;" onclick="return confirm('Delete all expenses?')">🗑️ Delete All</button>
+            </form>
+        </div>
+    </div>
+
+    <table>
+        <tr>
+                <th><input type="checkbox" id="select-all"></th> <!-- Checkbox column -->
+                <th>Date</th>
+                <th>Purpose</th>
+                <th>Amount</th>
+                <th style="position:relative;">
+                    Category 
+                    <span id="categoryIcon" style="cursor:pointer; display:inline-block; transition:transform 0.2s;" onclick="toggleCategoryDropdown()">⏷</span>
+                </th>
+
+                <!-- Move dropdown outside table so it doesn't get cut -->
+                <ul id="categoryDropdown" style="display:none; position:absolute; background:var(--section-bg); list-style:none; margin:0; padding:5px 0; border-radius:6px; z-index:999; box-shadow:0 4px 8px rgba(0,0,0,0.4); max-height:200px; overflow-y:auto; min-width:150px; color:var(--text-color);">
+                    <li style="padding:5px 12px; cursor:pointer;" onclick="filterByCategory('')">All</li>
+                    {% for category in categories %}
+                        <li style="padding:5px 12px; cursor:pointer;" onclick="filterByCategory('{{ category }}')">{{ category }}</li>
+                    {% endfor %}
+                </ul>
+
+                <th>Actions</th>
+            </tr>
+        {% for expense in expenses %}
+        <tr id="row-{{ expense.id }}">
+            <td><input type="checkbox" class="row-checkbox" value="{{ expense.id }}"></td>
+            <td>{{ expense.date }}</td>
+            <td>{{ expense.name }}</td>
+            <td>{{ user_currency }}{{ expense.amount }}</td>
+            <td>{{ expense.category }}</td>
+            <td>
+                <div class="action-buttons">
+                    <button type="button" onclick="toggleEditForm({{ expense.id }})" class="edit-button">✏️ Edit</button>
+                    <form action="{% url 'delete_expense' expense.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-button" onclick="return confirm('Delete this expense?')">🗑️ Delete</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+
+        <!-- Hidden inline edit form -->
+        <tr id="edit-form-{{ expense.id }}" style="display:none; background:var(--section-bg);">
+            <td colspan="6">
+                <form action="{% url 'edit_expense' expense.id %}" method="post" style="display:flex; gap:10px;">
+                    {% csrf_token %}
+                    <input type="date" name="date" value="{{ expense.date|date:'Y-m-d' }}" required>
+                    <input type="text" name="name" value="{{ expense.name }}" required>
+                    <input type="number" step="0.01" name="amount" value="{{ expense.amount }}" required>
+                    <select name="category" required>
+                        {% for category in categories %}
+                            <option value="{{ category }}" {% if category == expense.category %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">💾 Save</button>
+                    <button type="button" onclick="toggleEditForm({{ expense.id }})" class="delete-button">❌ Cancel</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No expense records found</td></tr>
+        {% endfor %}
+    </table>
+
+    <!-- Pagination -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:nowrap; gap:15px;">
+
+        <!-- Left: Page info -->
+        <div style="white-space:nowrap;font-weight:bold;color:var(--text-color);">
+            <h2>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</h2>
+        </div>
+
+        <!-- Right: Pagination controls -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+
+            <!-- Previous -->
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">
+                    <button type="button" style="padding:6px 12px;">« Previous</button>
+                </a>
+            {% else %}
+                <button type="button" style="padding:6px 12px;" disabled>« Previous</button>
+            {% endif %}
+
+            <!-- Sliding window of 5 pages -->
+            {% for num in page_range %}
+                {% if page_obj.number == num %}
+                    <button type="button" class="edit-button" style="padding:6px 12px; font-weight:bold; height:40px;" disabled>{{ num }}</button>
+                {% else %}
+                    <a href="?page={{ num }}">
+                        <button type="button" style="padding:6px 12px;">{{ num }}</button>
+                    </a>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next -->
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">
+                    <button type="button" style="padding:6px 12px;">Next »</button>
+                </a>
+            {% else %}
+                <button type="button" style="padding:6px 12px;" disabled>Next »</button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="chart-placeholder" style="position: relative;">
+
+        <!-- Filter Form (Top Right) -->
+        <form method="get" id="viewForm" 
+            style="position:absolute; top:6px; right:6px; display:flex !important; flex-direction:row !important; align-items:center; gap:10px; width:auto !important; padding:0 !important; background: transparent!important; border:none;">
+
+            <!-- View Type Selector -->
+            <select name="view" id="viewSelect"
+                onchange="handleViewChange()"
+                style="padding:6px 10px; color:var(--text-color); width:auto; border:1px solid #ccc; border-radius:4px;">
+                <option value="3m" {% if view_type == '3m' %}selected{% endif %}>Last 3 Months</option>
+                <option value="6m" {% if view_type == '6m' %}selected{% endif %}>Last 6 Months</option>
+                <option value="monthly" {% if view_type == 'monthly' %}selected{% endif %}>Last 1 Year</option>
+                <option value="2y" {% if view_type == '2y' %}selected{% endif %}>Last 2 Years</option>
+                <option value="yearly" {% if view_type == 'yearly' %}selected{% endif %}>Yearly</option>
+                <option value="all" {% if view_type == 'all' %}selected{% endif %}>All Time</option>
+                <option value="custom" {% if custom_start and custom_end %}selected{% endif %}>Custom Range</option>
+            </select>
+
+            <!-- Reset Button (moved beside selector) -->
+            <button type="button" onclick="resetChartFilters()" 
+                class="edit-button" style="padding:6px 10px; cursor:pointer; display:inline-flex; width:auto;">
+                Reset
+            </button>
+
+            <!-- Custom Date Range (hidden unless "custom" is selected) -->
+            <div id="customDateFields" 
+                style="display: none; align-items: center; gap: 6px; white-space:nowrap;">
+                <label style="color:var(--text-color); font-size:0.9em;">From:</label>
+                <input type="date" name="start" id="startDate" value="{{ custom_start }}" style="padding:4px 6px; background: #c6c7e4ff; color: #111; border:none; border-radius:6px;">
+                <label style="color:var(--text-color); font-size:0.9em;">To:</label>
+                <input type="date" name="end" id="endDate" value="{{ custom_end }}" style="padding:4px 6px; background: #c6c7e4ff; color: #111; border:none; border-radius:6px;">
+                <button type="submit" style="padding:6px 10px; cursor:pointer;">Apply</button>
+            </div>
+        </form>
+
+        <!-- Chart Canvas -->
+        <canvas id="expenseLogChart"></canvas>
+    </div>
+
+</main>
+</div>
+
+<footer>{% include 'core/footer.html' %}</footer>
+
+<script>
+function toggleCategoryDropdown() {
+    const dropdown = document.getElementById("categoryDropdown");
+    const icon = document.getElementById("categoryIcon");
+
+    // Calculate position below the icon
+    const rect = icon.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + window.scrollY) + "px";
+    dropdown.style.left = (rect.left + window.scrollX) + "px";
+
+    // Toggle display
+    if (dropdown.style.display === "none" || dropdown.style.display === "") {
+        dropdown.style.display = "block";
+        icon.style.transform = "rotate(180deg)";
+    } else {
+        dropdown.style.display = "none";
+        icon.style.transform = "rotate(0deg)";
+    }
+}
+
+// Close dropdown if clicked outside
+document.addEventListener("click", function(e) {
+    const dropdown = document.getElementById("categoryDropdown");
+    const icon = document.getElementById("categoryIcon");
+    if (!e.target.closest("#categoryIcon") && !e.target.closest("#categoryDropdown")) {
+        dropdown.style.display = "none";
+        icon.style.transform = "rotate(0deg)";
+    }
+});
+
+function filterByCategory(category) {
+    const rows = document.querySelectorAll("table tr[id^='row-']");
+    rows.forEach(row => {
+        const categoryCell = row.querySelector("td:nth-child(5)");
+        row.style.display = (!category || categoryCell.textContent.trim() === category) ? "" : "none";
+    });
+
+    // hide dropdown & reset arrow
+    const dropdown = document.getElementById("categoryDropdown");
+    const icon = document.getElementById("categoryIcon");
+    dropdown.style.display = "none";
+    icon.style.transform = "rotate(0deg)";
+}
+    //button inputs
+    function toggleFilter(id) {
+    let el = document.getElementById(id);
+    el.style.display = (el.style.display === "none") ? "block" : "none";
+    }
+    function toggleEditForm(id) {
+        const formRow = document.getElementById(`edit-form-${id}`);
+        formRow.style.display = (formRow.style.display === "none") ? "table-row" : "none";
+    }
+
+    // Select/Deselect all checkboxes
+    document.getElementById("select-all").addEventListener("change", function() {
+        document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
+    });
+
+    // Collect selected IDs before form submit
+    document.getElementById("delete-selected-form").addEventListener("submit", function(e) {
+        const selected = Array.from(document.querySelectorAll(".row-checkbox:checked")).map(cb => cb.value);
+        document.getElementById("selected-ids").value = selected.join(",");
+        if (selected.length === 0) {
+            e.preventDefault();
+            alert("Please select at least one income to delete.");
+        }
+    });
+    function getExpenseLogThemeColors() {
+        const isDark = document.body.classList.contains("dark");
+        return {
+            text: isDark ? "#E0E0E0" : "#222",
+            line: isDark ? "#FF6F61" : "#CC4444",
+            grid: isDark ? "#333" : "#ccc",
+            title: isDark ? "#fff" : "#111"
+        };
+    }
+
+    function createExpenseLogChart() {
+        const ctx = document.getElementById('expenseLogChart').getContext("2d");
+        const colors = getExpenseLogThemeColors();
+
+        // Format labels like "Jan, 2025"
+        const formattedLabels = {{ labels|safe }}.map(label => {
+            const parts = label.split("-");
+            if (parts.length === 2) {
+                const [year, month] = parts;
+                const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                return `${monthNames[parseInt(month) - 1]}, ${year}`;
+            }
+            return label;
+        });
+
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: formattedLabels,
+                datasets: [{
+                    label: 'Expenses ({{ user_currency }})',
+                    data: {{ data|safe }},
+                    borderColor: colors.line,
+                    backgroundColor: colors.line + "33",
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "📉 Expense Trend Over Time",
+                        color: colors.title,
+                        font: { size: 25, weight: "bold" }
+                    },
+                    legend: { labels: { color: colors.text } },
+                    zoom: {
+                        zoom: { wheel: { enabled: true }, mode: 'x' },
+                        pan: { enabled: true, mode: 'x' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: colors.text },
+                        grid: { color: colors.grid },
+                        title: {
+                            display: true,
+                            text: "Time (Months)",
+                            color: colors.text,
+                            font: { size: 14, weight: "bold" }
+                        }
+                    },
+                    y: {
+                        ticks: { 
+                            color: colors.text,
+                            callback: value => '{{ user_currency }}' + value 
+                        },
+                        grid: { color: colors.grid },
+                        title: {
+                            display: true,
+                            text: "Expense Amount",
+                            color: colors.text,
+                            font: { size: 14, weight: "bold" }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    let expenseLogChart = createExpenseLogChart();
+
+    document.addEventListener("themeChanged", () => {
+        expenseLogChart.destroy();
+        expenseLogChart = createExpenseLogChart();
+    });
+    //select form chart
+
+    function handleViewChange() {
+        const select = document.getElementById('viewSelect');
+        const customFields = document.getElementById('customDateFields');
+
+        if (select.value === 'custom') {
+            // ✅ Show date fields but DO NOT auto-submit
+            customFields.style.display = 'flex';
+        } else {
+            // ✅ Only auto-submit for non-custom views
+            customFields.style.display = 'none';
+            document.getElementById('viewForm').submit();
+        }
+    }
+
+
+    // If custom range was active on load, show fields
+    document.addEventListener("DOMContentLoaded", () => {
+        const select = document.getElementById('viewSelect');
+        if (select.value === 'custom') {
+            document.getElementById('customDateFields').style.display = 'flex';
+        }
+    });
+
+    // Reset button logic — revert to default "Last 1 Year" (monthly)
+    function resetChartFilters() {
+        const select = document.getElementById('viewSelect');
+        select.value = 'monthly'; // default view
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('viewForm').submit();
+    }
+
+
+</script>
+</body>
+</html>
+

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(135deg, #050a0c, #0e1b21, #182a35);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .register-container {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(22px) saturate(160%);
+        -webkit-backdrop-filter: blur(22px) saturate(160%);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        padding: 2rem 2.5rem;
+        width: 350px;
+        color: #ffffff;
+        margin-top: 70px;
+    }
+
+    .register-container h1 {
+        margin-bottom: 1.8rem;
+        text-align: center;
+        color: #ffc42eff;
+        letter-spacing: 0.5px;
+    }
+
+    .register-container label {
+        display: block;
+        margin-bottom: 0.5rem;
+        margin-top: 1rem;
+        color: #cfe1ff;
+        font-weight: 600;
+    }
+
+    .register-container input[type="text"],
+    .register-container input[type="email"],
+    .register-container input[type="password"] {
+        width: 94%;
+        padding: 0.6rem;
+        margin-bottom: 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .register-container input[type="text"]:focus,
+    .register-container input[type="email"]:focus,
+    .register-container input[type="password"]:focus {
+        border-color: #70a8ff;
+        background: rgba(255, 255, 255, 0.12);
+        outline: none;
+    }
+
+    .register-container button {
+        width: 100%;
+        padding: 0.8rem;
+        background: linear-gradient(135deg, #4f8cff, #3678e0);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, background 0.3s ease, opacity 0.3s ease;
+        box-shadow: 0 4px 15px rgba(79, 140, 255, 0.3);
+        margin-top: 1rem;
+        opacity: 0.95;
+    }
+
+    .register-container button:hover {
+        background: linear-gradient(135deg, #5b9dff, #4688f0);
+        transform: scale(1.03);
+        opacity: 1;
+    }
+
+    .register-container .login-link {
+        display: block;
+        text-align: center;
+        margin-top: 1.2rem;
+        color: #a9d1ff;
+        text-decoration: none;
+        font-size: 0.98rem;
+        transition: color 0.2s ease, opacity 0.3s ease;
+        opacity: 0.85;
+    }
+
+    .register-container .login-link:hover {
+        text-decoration: underline;
+        color: #cfe1ff;
+        opacity: 1;
+    }
+</style>
+
+</head>
+<body>
+    {% include "accounts/navbar.html" %}
+    
+    <form class="register-container" method="post">
+        {% csrf_token %}
+        <h1 style="display: flex; justify-content: center; align-items: center;">Create Account</h1>
+        <label for="username">Username</label>
+        {% if form.username %}
+        {{ form.username }}
+        {% else %}
+        <input type="text" id="username" name="username" required>
+        {% endif %}
+
+        <label for="email">Email</label>
+        {% if form.email %}
+        {{ form.email }}
+        {% else %}
+        <input type="email" id="email" name="email" required>
+        {% endif %}
+
+        <label for="password">Password</label>
+        {% if form.password1 %}
+        {{ form.password1 }}
+        {% else %}
+        <input type="password" id="password" name="password" required>
+        {% endif %}
+
+        <label for="confirm-password">Confirm Password</label>
+        {% if form.password2 %}
+        {{ form.password2 }}
+        {% else %}
+        <input type="password" id="confirm-password" name="confirm-password" required>
+        {% endif %}
+
+        <button type="submit">Register</button>
+        <a class="login-link" href="{% url 'login' %}">Already have an account? Login</a>
+        <div id="alert-message" style="display:none; margin-top:1rem; color:#d8000c; background:#ffd2d2; padding:0.5rem 1rem; border-radius:4px; text-align:center;"></div>
+        {% if form.errors %}
+        <ul>
+        {% for field in form %}
+            {% for error in field.errors %}
+                <li>{{ field.label }}: {{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        </form>
+        <script>
+        document.querySelector('.register-container').addEventListener('submit', function(e) {
+            var password = document.getElementById('password').value;
+            var confirm = document.getElementById('confirm-password').value;
+            var alertBox = document.getElementById('alert-message');
+            if (password !== confirm) {
+                e.preventDefault();
+                alertBox.textContent = "Passwords do not match.";
+                alertBox.style.display = "block";
+            } else {
+                alertBox.style.display = "none";
+            }
+        }); 
+        </script>
+        
+</body>
+</html>

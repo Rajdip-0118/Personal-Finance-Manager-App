@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Nav Bar</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/header.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <!-- Left hamburger -->
+        <div class="left-menu">
+            <div class="hamburger" id="leftMenuIcon" tabindex="0" aria-label="Open left menu" role="button">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="left-dropdown" id="leftDropdownMenu">
+                <a href="{% url 'settings_view' %}">⚙️ Settings</a>
+                <a href="{% url 'logout' %}">⏻ Logout</a>
+            </div>
+        </div>
+
+        <!-- Navigation menus -->
+        <div class="nav-menus">
+            <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            📊 Finance
+            </a>
+
+            <a href="{% url 'budget_list' %}" class="{% if request.resolver_match.url_name == 'budget_list' %}active{% endif %}">
+            💰 Budget
+            </a>
+
+            <a href="{% url 'savings_dashboard' %}" class="{% if request.resolver_match.url_name == 'savings_dashboard' %}active{% endif %}">
+            💸 Savings
+            </a>
+
+            <a href="{% url 'investment_portfolio' %}" class="{% if request.resolver_match.url_name == 'investment_portfolio' %}active{% endif %}">
+            📈 Investment
+            </a>
+
+            <a href="{% url 'income_history' %}" class="{% if request.resolver_match.url_name == 'income_history' %}active{% endif %}">
+                📜 Income History
+            </a>
+            <a href="{% url 'expense_log' %}" class="{% if request.resolver_match.url_name == 'expense_log' %}active{% endif %}">
+                💳 Expense Log
+            </a>
+        </div>
+
+        <!-- Search bar --> 
+        <div class="search-bar">
+            <div class="nav-arrows" id="searchNav" style="display:none;">
+                <button id="prevBtn">⬆️</button>
+                <span class="result-counter" id="resultCounter">0/0</span>
+                <button id="nextBtn">⬇️</button>
+            </div>
+            <span class="search-icon" id="searchIcon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search...">
+        </div>
+
+    </nav>
+
+    <script>
+        // Left menu toggle
+        const leftMenuIcon = document.getElementById('leftMenuIcon');
+        const leftDropdownMenu = document.getElementById('leftDropdownMenu');
+
+        leftMenuIcon.addEventListener('click', function() {
+            leftDropdownMenu.style.display = leftDropdownMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!leftMenuIcon.contains(e.target) && !leftDropdownMenu.contains(e.target)) {
+                leftDropdownMenu.style.display = 'none';
+            }
+        });
+        const menuLinks = document.querySelectorAll('.nav-menus a');
+
+        menuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                menuLinks.forEach(l => l.classList.remove('active')); // remove from all
+                this.classList.add('active'); // add to clicked one
+            });
+        });
+ // Floating instant search
+        (function() {
+            const input = document.getElementById('searchInput');
+            const searchNav = document.getElementById('searchNav');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const resultCounter = document.getElementById('resultCounter');
+
+            let highlights = [];
+            let currentIndex = 0;
+
+            function removeHighlights() {
+                highlights.forEach(span => {
+                    const parent = span.parentNode;
+                    parent.replaceChild(document.createTextNode(span.textContent), span);
+                    parent.normalize();
+                });
+                highlights = [];
+                currentIndex = 0;
+                updateCounter();
+            }
+
+            function highlightText(node, search) {
+                if (!node || node.nodeType !== 3) return;
+                if (!node.parentElement.offsetParent) return; // only visible
+                const val = node.nodeValue;
+                const regex = new RegExp(search, 'gi');
+                let match, lastIndex = 0;
+                const frag = document.createDocumentFragment();
+
+                while ((match = regex.exec(val)) !== null) {
+                    if (match.index > lastIndex) frag.appendChild(document.createTextNode(val.substring(lastIndex, match.index)));
+                    const span = document.createElement('span');
+                    span.textContent = match[0];
+                    span.classList.add('search-highlight');
+                    frag.appendChild(span);
+                    highlights.push(span);
+                    lastIndex = match.index + match[0].length;
+                }
+                if (lastIndex < val.length) frag.appendChild(document.createTextNode(val.substring(lastIndex)));
+                if (frag.childNodes.length) node.parentNode.replaceChild(frag, node);
+            }
+
+            function searchAndHighlight() {
+                const searchTerm = input.value.trim();
+                removeHighlights();
+                if (!searchTerm) {
+                    searchNav.style.display = 'none';
+                    return;
+                }
+
+                const bodyNodes = document.body.querySelectorAll('*:not(.search-bar):not(script):not(style)');
+                bodyNodes.forEach(el => el.childNodes.forEach(child => highlightText(child, searchTerm)));
+
+                if (highlights.length) {
+                    searchNav.style.display = 'flex';
+                    currentIndex = 0;
+                    scrollToCurrent();
+                } else {
+                    searchNav.style.display = 'none';
+                }
+                updateCounter();
+            }
+
+            function scrollToCurrent() {
+                highlights.forEach((el, idx) => {
+                    el.classList.remove('search-active');
+                    if (idx === currentIndex) {
+                        el.classList.add('search-active');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+                updateCounter();
+            }
+
+            function updateCounter() {
+                resultCounter.textContent = highlights.length ? `${currentIndex+1}/${highlights.length}` : '0/0';
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (!highlights.length) return;
+                currentIndex = (currentIndex - 1 + highlights.length) % highlights.length;
+                scrollToCurrent();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (!highlights.length) return;
+                currentIndex = (currentIndex + 1) % highlights.length;
+                scrollToCurrent();
+            });
+
+            input.addEventListener('input', searchAndHighlight);
+        })();
+    </script>
+</body>
+</html>

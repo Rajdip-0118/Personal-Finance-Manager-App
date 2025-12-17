@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'budget/styles.css' %}">
+    <title>Budget List</title>
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<header>
+    {% include 'core/header.html' %}
+</header>
+
+<div id="popup-messages">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="popup-message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'budget/sidebar.html' %}
+<main style="flex:1">
+    {% if overspent_budgets %}
+    <div class="marquee">
+        <span id="marquee-text">
+            ⚠️ Overspent Budgets: 
+            {% for b in overspent_budgets %}
+                {{ b }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+            ( budgets have exceeded their limits)
+        </span>
+    </div>
+    {% endif %}
+
+    <h1 class="page-title">📜 Budgets</h1>
+    <!-- Summary Card -->
+    <div class="card">
+        <h2 style="text-align:center;">📊Overall Budget Summary</h2>
+        <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap;">
+            <div style="text-align:center; margin:10px;">
+                <h3>Total Budgets</h3>
+                <p style="font-size:1.5em;">{{ budgets.count }}</p>
+            </div>
+            <div style="text-align:center; margin:10px;">
+                <h3>Total Spent</h3>
+                <p style="font-size:1.5em; color:#c97610;">
+                    {{ user_currency }}{{ total_spent }}
+                </p>
+            </div>
+            <div style="text-align:center; margin:10px;">
+                <h3>Total Remaining</h3>
+                {% if total_remaining > 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:green;">+{{ user_currency }}{{ total_remaining|floatformat:2 }}</p>
+                        {% elif total_remaining < 0 %}
+                            <p style="font-size:1.5em; font-weight:bold; color:red;">{{ user_currency }}{{ total_remaining|floatformat:2 }}</p>
+                        {% else %}
+                            <p style="font-size:1.5em; font-weight:bold; color:gray;">{{ user_currency }}{{ total_remaining|floatformat:2 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Overall Budget Utilization Bar -->
+        <div style="margin-top:20px; background:var(--section-bg); border-radius:8px; overflow:hidden; height:25px;">
+            <div style="
+                width:{{ overall_percent|floatformat:2 }}%;
+                height:100%;
+                background:{% if overall_percent >= 98 %}#981c37
+                        {% elif overall_percent >= 70 %}#c97610
+                        {% else %}#00BFA6{% endif %};
+                transition: width 0.5s ease;
+            " title="{{ total_spent }} / {{ total_amount }}">
+            </div>
+        </div>
+        <p style="text-align:center; margin-top:5px;">
+            Overall Budget Utilization: {{ overall_percent|floatformat:2 }}%
+        </p>
+    </div>
+
+    <!-- Manage Budgets Card -->
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between;">
+        <h2>⚙️ Manage Budgets</h2>
+        <div style="display:flex; gap:10px;">
+            <a href="{% url 'add_budget' %}"><button>➕ Add New Budget</button></a>
+
+            <form id="edit-selected-form" method="post" style="margin:0; padding:0; border:none;">
+                {% csrf_token %}
+                <input type="hidden" name="selected_id" id="edit-selected-id">
+                <button type="button" class="edit-button" id="edit-selected-btn">✏️ Edit Selected</button>
+            </form>
+
+            <form id="delete-selected-form" action="{% url 'delete_selected_budgets' %}" method="post" style="margin:0; padding:0; border:none;">
+                {% csrf_token %}
+                <input type="hidden" name="selected_ids" id="selected-ids">
+                <button type="submit" class="delete-button" onclick="return confirm('Delete selected budgets?')">🗑️ Delete Selected</button>
+            </form>
+
+            <form action="{% url 'bulk_delete_budget' %}" method="post" style="margin:0; padding:0; border:none;"> 
+                {% csrf_token %}
+                <button type="submit" class="delete-button" onclick="return confirm('Delete all budgets?')">🗑️ Delete All</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Budgets Table -->
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all"></th>
+                <th>Name</th>
+                <th>Period</th>
+                <th>Budget Amount</th>
+                <th>Spent</th>
+                <th>Remaining</th>
+                <th>Progress</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in budget_data %}
+            <tr {% if data.spent > data.obj.total_amount %} style="background-color: #b22222 ; color: #e8f5e9;" {% endif %}>
+                <td>
+                    <input type="checkbox" class="row-checkbox" data-budget-id="{{ data.obj.id }}">
+                </td>
+                <td>{{ data.obj.name }}</td>
+                <td>{{ data.obj.start_date }} → {{ data.obj.end_date }}</td>
+                <td>{{ user_currency }}{{ data.obj.total_amount|floatformat:2 }}</td>
+                <td>{{ user_currency }}{{ data.spent }}</td>
+                <td>{% if data.remaining < 0 %}<p style="font-weight:bold; color:red;">{{ user_currency }}{{ data.remaining|floatformat:2 }}</p>
+                    {% elif data.remaining > 0 %}<p style="font-weight:bold; color:green;">+{{ user_currency }}{{ data.remaining|floatformat:2 }}</p>
+                    {% else %}<p style="font-weight:bold; color:gray;">{{ user_currency }}{{ data.remaining|floatformat:2 }}</p>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="background:var(--section-bg); border-radius:6px; overflow:hidden; height:20px; position: relative;">
+                        <div style="
+                            height:100%;
+                            width:{{ data.percent|floatformat:0 }}%;
+                            background:{% if data.percent >= 98 %}#981c37
+                                    {% elif data.percent >= 75 %}#c97610
+                                    {% else %}#00BFA6{% endif %};
+                            transition: width 0.5s ease;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: #fff;
+                            font-size: 0.8em;
+                            font-weight: bold;
+                        " title="{{ data.spent }} / {{ data.obj.total_amount }}">
+                            {{ data.percent|floatformat:0 }}%
+                        </div>
+                    </div>
+                </td>
+
+                <td>
+                    <a href="{% url 'budget_detail' data.obj.id %}"><button class="edit-button">View</button></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align:center;">No budgets allocated.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+        <!-- Pagination -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:nowrap; gap:15px;">
+
+        <!-- Left: Page info -->
+        <div style="white-space:nowrap; font-weight:bold; color:var(--text-color);">
+            <h2>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</h2>
+        </div>
+
+        <!-- Right: Pagination controls -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+
+            <!-- Previous -->
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">
+                    <button type="button" style="padding:6px 12px;">« Previous</button>
+                </a>
+            {% else %}
+                <button type="button" style="padding:6px 12px;" disabled>« Previous</button>
+            {% endif %}
+
+            <!-- Sliding window of 5 pages -->
+            {% for num in page_range %}
+                {% if page_obj.number == num %}
+                    <button type="button" class="edit-button" style="padding:6px 12px; font-weight:bold; height:40px;" disabled>{{ num }}</button>
+                {% else %}
+                    <a href="?page={{ num }}">
+                        <button type="button" style="padding:6px 12px;">{{ num }}</button>
+                    </a>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Next -->
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">
+                    <button type="button" style="padding:6px 12px;">Next »</button>
+                </a>
+            {% else %}
+                <button type="button" style="padding:6px 12px;" disabled>Next »</button>
+            {% endif %}
+        </div>
+    </div>
+    
+</main>
+</div>
+
+<footer>
+   {% include 'core/footer.html' %}
+</footer>
+
+<script>
+    // Edit Selected Button
+    const editBtn = document.getElementById("edit-selected-btn");
+    const editForm = document.getElementById("edit-selected-form");
+    const editSelectedInput = document.getElementById("edit-selected-id");
+
+    editBtn.addEventListener("click", function() {
+        const selected = document.querySelectorAll(".row-checkbox:checked");
+        if (selected.length !== 1) {
+            alert("Please select exactly one budget to edit.");
+            return;
+        }
+
+        const budgetId = selected[0].getAttribute("data-budget-id");
+        // Navigate to edit page
+        window.location.href = `/budget/edit/${budgetId}/`;
+    });
+
+    // Select/Deselect all checkboxes
+    document.getElementById("select-all").addEventListener("change", function() {
+        document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
+    });
+
+    // Populate selected IDs before submitting "Delete Selected" form
+    const deleteSelectedForm = document.getElementById("delete-selected-form");
+    deleteSelectedForm.addEventListener("submit", function(e) {
+        const selectedIds = Array.from(document.querySelectorAll(".row-checkbox:checked"))
+                                 .map(cb => cb.getAttribute("data-budget-id"))
+                                 .join(",");
+        if (!selectedIds) {
+            alert("Please select at least one budget to delete.");
+            e.preventDefault();
+            return;
+        }
+        document.getElementById("selected-ids").value = selectedIds;
+    });
+</script>
+
+</body>
+</html>

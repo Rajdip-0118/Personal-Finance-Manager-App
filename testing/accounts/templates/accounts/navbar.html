@@ -1,0 +1,205 @@
+<canvas id="money-bg"></canvas>
+<div style="height: 80px;"></div>
+<nav style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(50, 8, 80, 0.46); /* darker violet glass */
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid rgba(75, 0, 130, 0.5);
+    padding: 1rem 0;
+    box-shadow: 0 8px 32px rgba(48, 0, 96, 0.35);
+    z-index: 10;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    transition: background 0.3s ease;
+">
+    <div style="
+        max-width: 1100px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 2rem;
+    ">
+        <span style="
+            color: #fff;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+        ">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style="margin-right: 0.8rem; filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.3));">
+                <rect x="2" y="4" width="20" height="16" rx="4" fill="#FFD700" opacity="0.1"/>
+                <rect x="2" y="4" width="20" height="16" rx="4" stroke="#FFD700" stroke-width="1.5" stroke-opacity="0.3"/>
+                
+                <path d="M6 14L10 10L14 14L18 7" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                
+                <circle cx="18" cy="7" r="1.5" fill="#FFD700" />
+            </svg>
+            Personal Finance Manager
+        </span>
+        <div style="display: flex; gap: 1.2rem; margin-left: auto;">
+            <a href="{% url 'homepage' %}" style="
+                color: #fff;
+                text-decoration: none;
+                font-size: 1.05rem;
+                font-weight: 500;
+                padding: 0.4rem 1.1rem;
+                border-radius: 8px;
+                transition: background 0.2s, box-shadow 0.2s;
+                background: rgba(75, 0, 130, 0.2);
+            ">Home</a>
+            <a href="{% url 'login' %}" style="
+                color: #fff;
+                text-decoration: none;
+                font-size: 1.05rem;
+                font-weight: 500;
+                padding: 0.4rem 1.1rem;
+                border-radius: 8px;
+                background: rgba(75, 0, 130, 0.25);
+                box-shadow: 0 2px 8px rgba(75, 0, 130, 0.3);
+                transition: background 0.2s, box-shadow 0.2s;
+            ">Login</a>
+            <a href="{% url 'register' %}" style="
+                color: #fff;
+                text-decoration: none;
+                font-size: 1.05rem;
+                font-weight: 500;
+                padding: 0.4rem 1.1rem;
+                border-radius: 8px;
+                background: rgba(75, 0, 130, 0.35);
+                box-shadow: 0 2px 8px rgba(75, 0, 130, 0.35);
+                transition: background 0.2s, box-shadow 0.2s;
+            ">Sign Up</a>
+        </div>
+    </div>
+</nav>
+
+
+    <style>
+        /* Elegant Money Background */
+        #money-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;  /* behind content */
+        pointer-events: none;
+        background: transparent;
+        }
+        /* Popup Message Styles */
+
+            .popup-message {
+                padding: 0.8rem 1.2rem;
+                margin-top: 10px;
+                border-radius: 8px;
+                color: #fff;
+                font-weight: 600;
+                min-width: 250px;
+                text-align: center;
+                opacity: 0;
+                transform: translateY(-20px);
+                animation: slideDown 0.5s forwards; /* slide down effect */
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            }
+
+            /* Message colors */
+            .popup-message.success { background-color: #27ae5fa2; }
+            .popup-message.error { background-color: #e74d3cb1; }
+            .popup-message.warning { background-color: #f39d12a9; }
+
+            /* Slide down animation */
+            @keyframes slideDown {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+    </style>
+
+<script>
+
+window.addEventListener('DOMContentLoaded', () => {
+    const messages = document.querySelectorAll('.popup-message');
+    messages.forEach(msg => {
+        setTimeout(() => {
+            msg.style.transition = 'opacity 1s, transform 1s';
+            msg.style.opacity = '0';
+            msg.style.transform = 'translateY(-20px)';
+            setTimeout(() => msg.remove(), 1000); // remove from DOM after fade
+        }, 5000); // 5 seconds display
+    });
+});
+
+
+
+const canvas = document.getElementById('money-bg');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 💰💸₹🪙🎁💲💳💵 — finance themed emojis
+const emojis = ['💰','💸','₹','🪙','🎁','💲','💳','💵'];
+const count = 70;
+
+// Center-safe area (no emojis here)
+const safeZone = {
+    x1: canvas.width * 0.3,
+    x2: canvas.width * 0.7,
+    y1: canvas.height * 0.3,
+    y2: canvas.height * 0.7
+};
+
+function getRandomPosition() {
+    let x, y;
+    do {
+        x = Math.random() * canvas.width;
+        y = Math.random() * canvas.height;
+    } while (x > safeZone.x1 && x < safeZone.x2 && y > safeZone.y1 && y < safeZone.y2);
+    return {x, y};
+}
+
+const items = Array.from({length: count}, () => {
+    const size = 60 + Math.random() * 90;
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const {x, y} = getRandomPosition();
+    return {
+        x, y,
+        size,
+        rotation: (Math.random() - 0.5) * 0.6,
+        shadowOffset: Math.random() * 10 + 5,
+        emoji,
+        color: emoji === '₹' ? '#fff' : null
+    };
+});
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    items.forEach(item => {
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.rotation);
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = item.shadowOffset;
+        ctx.shadowOffsetY = item.shadowOffset;
+        ctx.font = `${item.size}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        if (item.color) ctx.fillStyle = item.color;
+        ctx.fillText(item.emoji, 0, 0);
+        ctx.restore();
+    });
+}
+
+draw();
+</script>

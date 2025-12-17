@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Finance Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'finance/dashboard.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<header>{% include 'core/header.html' %}</header>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+    {% include 'finance/sidebar.html' %}
+
+    {% if messages %}
+    <div id="popup-messages">
+        {% for message in messages %}
+            <div class="popup-message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main style="flex:1; padding:20px;">
+        <div class="marquee">
+            <span id="marquee-text">
+            {% if last_transaction %}
+                Last Transaction:
+                {% if last_transaction.category %} {{ last_transaction.category }} - {% endif %}
+                {{ user_currency }}{{ last_transaction.amount }} on {{ last_transaction.date }}
+            {% else %}
+                <p>No transactions yet.</p>
+            {% endif %}
+            {% if due_expenses %}
+                &nbsp;|&nbsp; Pending Expenses:
+                {% for expense in due_expenses %}
+                    {{ expense.category }} - {{ user_currency }}{{ expense.amount }} (Due: {{ expense.next_due_date }}){% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            {% endif %}
+            </span>
+        </div>
+
+        <div class="dashboard-container">
+            <h1>👋 Welcome {{ user.username }}!</h1>
+
+            <div class="summary-container">
+                <a href="{% url 'income_history' %}" class="summary-box income-box">
+                    <h3>Total Income</h3>
+                    <p id="totalIncome">{{ user_currency }}{{ total_income }}</p>
+                </a>
+                <a href="{% url 'expense_log' %}" class="summary-box expense-box">
+                    <h3>Total Expense</h3>
+                    <p id="totalExpense">{{ user_currency }}{{ total_expense }}</p>
+                </a>
+                <div class="summary-box balance-box">
+                    <h3>Balance</h3>
+                    <p id="balanceDisplay">{{ user_currency }}{{ balance }}</p>
+                </div>
+            </div>
+
+            <div class="upload-toggle-container">
+                <button class="upload-toggle" type="button" onclick="toggleUpload()">
+                    <span id="upload-arrow">⬇️</span> Upload Real Bank Statement CSV
+                </button>
+                <div class="upload-section" id="upload-section">
+                    <h2>Already have a CSV of a Real Bank Statement?</h2>
+                    <form method="POST" enctype="multipart/form-data" action="{% url 'upload_bank_statement' %}">
+                        {% csrf_token %}
+                        <label for="csv_file">Upload Real Bank Statement CSV (MAX limit: 1.5MB)</label>
+                        <input type="file" name="csv_file" accept=".csv" required>
+                        <button type="submit">Upload</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="chart-filter" style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:20px;">
+                <form method="get" id="filterForm" style="display:flex; gap:10px; align-items:center;">
+                    <select name="view" id="viewSelect" onchange="handleFilterChange()"
+                        style="padding:6px 10px; border-radius:6px; background:var(--input-bg); color:var(--text-color); border:1px solid var(--border-color);">
+                        <option value="3m" {% if view_type == '3m' %}selected{% endif %}>Last 3 Months</option>
+                        <option value="6m" {% if view_type == '6m' %}selected{% endif %}>Last 6 Months</option>
+                        <option value="monthly" {% if view_type == 'monthly' %}selected{% endif %}>Last 1 Year</option>
+                        <option value="2y" {% if view_type == '2y' %}selected{% endif %}>Last 2 Years</option>
+                        <option value="all" {% if view_type == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="custom" {% if custom_start and custom_end %}selected{% endif %}>Custom Range</option>
+                    </select>
+
+                    <div id="customDateFields" style="display:none; align-items:center; gap:6px;">
+                        <label style="color:var(--text-color); font-size:0.9em;">From:</label>
+                        <input type="date" name="start" id="startDate" value="{{ custom_start }}" style="padding:4px 6px; background: #a3a8ffff; color: #111; border:none; border-radius:6px;">
+                        <label style="color:var(--text-color); font-size:0.9em;">To:</label>
+                        <input type="date" name="end" id="endDate" value="{{ custom_end }}" style="padding:4px 6px; background: #a3a8ffff; color: #111; border:none; border-radius:6px;">
+                        <button type="submit" style="padding:6px 10px; background: #5900ffff; color: #fff; border:none; border-radius:6px; cursor:pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">Apply</button>
+                    </div>
+
+                    <button type="button" onclick="resetFilters()" class="edit-button" style="padding:6px 10px; background: #b700ffff; color: #fff; border:none; border-radius:6px; cursor:pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">Reset</button>
+                </form>
+            </div>
+
+            <!-- Charts (HEIGHT SET TO 500px PER YOUR INSTRUCTION) -->
+
+            <div class="chart-wrapper">
+                <div class="chart-header">
+                    <button class="collapse-btn" onclick="toggleChart(this)">▼ Income vs Expense (Weekly)</button>
+                    <div class="chart-controls">
+                        <button onclick="setChartType('incomeExpenseChart', 'bar')">Bar</button>
+                        <button onclick="setChartType('incomeExpenseChart', 'line')">Line</button>
+                        <button onclick="setChartType('incomeExpenseChart', 'area')">Area</button>
+                    </div>
+                </div>
+                <div class="chart-box" id="box-incomeExpenseChart" style="height:500px;">
+                    <canvas id="incomeExpenseChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+                <div class="chart-header">
+                    <button class="collapse-btn" onclick="toggleChart(this)">▼ Monthly Trends</button>
+                    <div class="chart-controls">
+                        <button onclick="setChartType('monthlyTrendsChart', 'line')">Line</button>
+                        <button onclick="setChartType('monthlyTrendsChart', 'bar')">Bar</button>
+                        <button onclick="setChartType('monthlyTrendsChart', 'area')">Area</button>
+                    </div>
+                </div>
+                <div class="chart-box" id="box-monthlyTrendsChart" style="height:500px;">
+                    <canvas id="monthlyTrendsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-wrapper">
+                <div class="chart-header">
+                    <button class="collapse-btn" onclick="toggleChart(this)">▼ Category-wise Expense</button>
+                    <div class="chart-controls">
+                        <button onclick="setChartType('categoryExpenseChart', 'doughnut')">Donut</button>
+                        <button onclick="setChartType('categoryExpenseChart', 'pie')">Pie</button>
+                    </div>
+                </div>
+                <div class="chart-box" id="box-categoryExpenseChart" style="height:500px;">
+                    <canvas id="categoryExpenseChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<footer>{% include 'core/footer.html' %}</footer>
+
+
+<!-- SCRIPTS (UNCHANGED EXCEPT FOR HEIGHT SUPPORT) -->
+<script>
+
+    function toggleUpload() {
+        const section = document.getElementById('upload-section');
+        const arrow = document.getElementById('upload-arrow');
+        const isOpen = section.classList.toggle('open');
+        arrow.classList.toggle('rotate', isOpen);
+    }
+
+    // Marquee animation duration based on text width
+    window.addEventListener("load", function() {
+    const marquee = document.getElementById("marquee-text");
+    const textWidth = marquee.offsetWidth; // pixel width of text
+    const containerWidth = marquee.parentElement.offsetWidth;
+
+    // duration formula → longer text = longer duration
+    const duration = (textWidth + containerWidth) / 35; // tweak "35" for speed factor
+
+    marquee.style.animationDuration = duration + "s";
+    });
+
+    function handleFilterChange() {
+        const select = document.getElementById('viewSelect');
+        const customFields = document.getElementById('customDateFields');
+        if (select.value === 'custom') {
+            customFields.style.display = 'flex';
+        } else {
+            customFields.style.display = 'none';
+            document.getElementById('filterForm').submit();
+        }
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        const select = document.getElementById('viewSelect');
+        if (select && select.value === 'custom') {
+            document.getElementById('customDateFields').style.display = 'flex';
+        }
+    });
+
+    function resetFilters() {
+        document.getElementById('viewSelect').value = 'monthly';
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('filterForm').submit();
+    }
+
+    function animateCounter(elId, target, currency) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        const duration = 800;
+        const frameRate = 30;
+        const steps = Math.ceil(duration / (1000 / frameRate));
+        const start = 0;
+        const stepVal = (parseFloat(target) || 0) / steps;
+        let current = start;
+        let i = 0;
+        const timer = setInterval(() => {
+            i++;
+            current += stepVal;
+            if (i >= steps) {
+                current = parseFloat(target) || 0;
+                clearInterval(timer);
+            }
+            el.innerText = currency + current.toFixed(2).toLocaleString();
+        }, Math.round(1000 / frameRate));
+    }
+
+    window.addEventListener('load', () => {
+        animateCounter("totalIncome", {{ total_income|floatformat:2 }}, "{{ user_currency }}");
+        animateCounter("totalExpense", {{ total_expense|floatformat:2 }}, "{{ user_currency }}");
+        animateCounter("balanceDisplay", {{ balance|floatformat:2 }}, "{{ user_currency }}");
+    });
+
+    function toggleChart(btn) {
+        const wrapper = btn.closest('.chart-wrapper');
+        const canvasBox = wrapper.querySelector('.chart-box');
+        const isCollapsed = canvasBox.classList.toggle('collapsed');
+        btn.textContent = (isCollapsed ? '► ' : '▼ ') + btn.textContent.slice(2);
+    }
+
+    const chartInstances = {};
+
+    function setChartType(chartId, type) {
+        const chart = chartInstances[chartId];
+        if (!chart) return;
+
+        const newType = (type === 'area') ? 'line' : type;
+
+        // --- FIX: Pie vs Donut switching ---
+        if (chartId === "categoryExpenseChart") {
+            if (type === "pie") {
+                chart.config.options.cutout = "0%";  
+            } else if (type === "doughnut") {
+                chart.config.options.cutout = "55%"; 
+            }
+        }
+
+        chart.config.type = newType;
+        chart.config.data.datasets.forEach(ds => {
+            ds.fill = (type === 'area');
+            ds.pointRadius = (newType === 'line') ? 4 : 0;
+        });
+
+        chart.update();
+    }
+
+    const isLight = document.body.classList.contains('light');
+    const textColor = isLight ? '#121212' : '#fff';
+    const gridColor = isLight ? '#e0e0e0' : '#333';
+
+    const months = {{ months|safe }};
+    const incomeData = {{ income_data|safe }};
+    const expenseData = {{ expense_data|safe }};
+    const weeks = {{ weeks|safe }};
+    const weeklyIncomeData = {{ weekly_income_data|safe }};
+    const weeklyExpenseData = {{ weekly_expense_data|safe }};
+    const categoryLabels = {{ category_labels|safe }};
+    const categoryValues = {{ category_values|safe }};
+
+    function getChartOptions(titleText) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 700, easing: 'easeInOutCubic' },
+            plugins: {
+                legend: { labels: { color: textColor } },
+                title: { display: true, text: titleText, color: textColor, font: { size: 20, weight: '700' } },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            let val = ctx.raw;
+                            if (val === null || val === undefined) val = 0;
+                            return "{{ user_currency }}" + Number(val).toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                y: {
+                    ticks: {
+                        color: textColor,
+                        callback: value => "{{ user_currency }}" + Number(value).toLocaleString()
+                    },
+                    grid: { color: gridColor }
+                }
+            }
+        };
+    }
+
+    (function(){
+        const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+        chartInstances['incomeExpenseChart'] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: weeks,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: weeklyIncomeData,
+                        backgroundColor: isLight ? 'rgba(123,47,247,0.75)' : 'rgba(123,47,247,0.85)',
+                        borderColor: 'rgba(123,47,247,1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Expense',
+                        data: weeklyExpenseData,
+                        backgroundColor: isLight ? 'rgba(241,7,163,0.75)' : 'rgba(241,7,163,0.85)',
+                        borderColor: 'rgba(241,7,163,1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: getChartOptions("Income vs Expense (Weekly)")
+        });
+    })();
+
+    (function(){
+        const ctx = document.getElementById('monthlyTrendsChart').getContext('2d');
+        chartInstances['monthlyTrendsChart'] = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomeData,
+                        borderColor: 'rgba(123,47,247,1)',
+                        backgroundColor: 'rgba(124,47,247,0.73)',
+                        fill: true,
+                        tension: 0.32,
+                        pointRadius: 4
+                    },
+                    {
+                        label: 'Expense',
+                        data: expenseData,
+                        borderColor: 'rgba(241,7,163,1)',
+                        backgroundColor: 'rgba(241, 7, 163, 0.73)',
+                        fill: true,
+                        tension: 0.32,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: getChartOptions("Monthly Trends")
+        });
+    })();
+
+    (function(){
+        const ctx = document.getElementById('categoryExpenseChart').getContext('2d');
+        chartInstances['categoryExpenseChart'] = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryValues,
+                    backgroundColor: [
+                        'rgba(123,47,247,0.85)',
+                        'rgba(241,7,163,0.85)',
+                        'rgba(255,193,7,0.85)',
+                        'rgba(76,175,80,0.85)',
+                        'rgba(255,87,34,0.85)',
+                        'rgba(96,125,139,0.85)',
+                        'rgba(97,74,6,0.85)',
+                        'rgba(82,8,75,0.85)',
+                        'rgba(9,133,6,0.85)',
+                        'rgba(16,38,185,0.85)'
+                    ],
+                    hoverOffset: 12
+                }]
+            },
+            options: {
+                ...getChartOptions("Category-wise Expense"),
+                cutout: '55%',
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
+            }
+        });
+    })();
+    // --- After all charts have been created ---
+    Object.values(chartInstances).forEach(chart => {
+        new ResizeObserver(() => {
+            chart.resize();
+        }).observe(chart.canvas.parentElement);
+    });
+
+
+</script>
+</body>
+</html>

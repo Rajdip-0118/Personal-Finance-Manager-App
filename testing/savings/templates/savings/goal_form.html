@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if goal %}Edit Goal{% else %}Add Goal{% endif %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'savings/styles.css' %}">
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<header>
+    {% include 'core/header.html' %}
+</header>
+
+<div id="popup-messages">
+    {% if messages %}    
+        {% for message in messages %}    
+            <div class="popup-message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div style="display: flex; min-height: calc(100vh - 100px);">
+    {% include 'savings/sidebar.html' %}
+    <main style="flex: 1;">
+        <h1 class="page-title">
+            {% if goal %}✏️ Edit Goal - {{ goal.name }}{% else %}➕ Add Savings Goal{% endif %}
+        </h1>
+        <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="errorlist nonfield">
+                    {% for error in form.non_field_errors %}
+                        <p style="color:red; font-weight:bold;">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-field" style="position: relative;">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small>{{ field.help_text }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="errorlist">
+                            {% for error in field.errors %}
+                                <p style="color:red;">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit">{% if goal %}Update{% else %}Save{% endif %}</button>
+        </form>
+        <div style="margin-top:20px;">
+            <a href="{% url 'savings_dashboard' %}">
+                <button class="edit-button">Back to Savings Goals</button>
+            </a>
+        </div>
+        </div>
+    </main>
+</div>
+
+<!-- Tooltip element -->
+<div id="date-tooltip">Past dates cannot be selected</div>
+
+<footer>{% include 'core/footer.html' %}</footer>
+
+<script>
+    // Auto-hide popup messages
+    setTimeout(() => {
+        document.querySelectorAll(".popup-message").forEach(msg => {
+            msg.classList.add("fade-out");
+            setTimeout(() => msg.remove(), 500);
+        });
+    }, 3000);
+
+    // Tooltip for date picker
+    document.addEventListener("DOMContentLoaded", function() {
+        const dateInput = document.querySelector("input[name='deadline']");
+        const tooltip = document.getElementById("date-tooltip");
+
+        if (dateInput && tooltip) {
+            // Only show tooltip on hover over the input (calendar icon)
+            dateInput.addEventListener("mouseover", function(e) {
+                tooltip.style.display = "block";
+                tooltip.style.left = e.pageX + 10 + "px";
+                tooltip.style.top = e.pageY + 10 + "px";
+            });
+            dateInput.addEventListener("mousemove", function(e) {
+                tooltip.style.left = e.pageX + 10 + "px";
+                tooltip.style.top = e.pageY + 10 + "px";
+            });
+            dateInput.addEventListener("mouseout", function() {
+                tooltip.style.display = "none";
+            });
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(90deg, #3c0052, #6c3e05);
+            color: #fff;
+            padding: 10px 20px;
+            height: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        /* Left hamburger */
+        .left-menu {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .hamburger {
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 3px;
+            background: #fff;
+            margin: 4px 0;
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+        .hamburger:hover span {
+            background: #ff9800;
+        }
+        .left-dropdown {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: 45px;
+            background: #2a2a2a;
+            min-width: 150px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            z-index: 100;
+        }
+        .left-dropdown a {
+            display: block;
+            color: #fff;
+            padding: 12px 16px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .left-dropdown a:hover {
+            background: #ff9800;
+        }
+        /* Navigation menus */
+        .nav-menus {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+        }
+        .nav-menus a {
+            color: #fff;
+            font-size: 18px;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-menus a:hover {
+            background: #be7507;
+            color: #fff;
+        }
+        .nav-menus a.active {
+        color: #ff9800;
+        font-weight: bold;
+        }
+    /* Search bar container */
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Input field */
+.search-bar input[type="text"] {
+    padding: 6px 10px 6px 35px; /* leave space for icon */
+    border: none;
+    border-radius: 20px;
+    width: 120px;
+    transition: width 0.3s ease, box-shadow 0.3s ease;
+    font-size: 14px;
+}
+
+.search-bar input[type="text"]:focus {
+    width: 220px;
+    outline: none;
+    box-shadow: 0 0 8px rgba(255,152,0,0.8);
+}
+
+/* Search icon */
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.search-icon:hover {
+    color: #ff9800;
+}
+
+/* Highlight style */
+.search-highlight {
+    background-color: yellow;
+    color: red;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+/* Navigation arrows */
+.nav-arrows {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 9999;
+    pointer-events: auto;
+    position: fixed; /* fixed position so it floats */
+    top: 55px;       /* initial fallback */
+    left: 92%;       /* centered horizontally by default */
+    transform: translateX(-50%);
+}
+body.dark .nav-arrows {
+    background: rgba(255,255,255,0.5);
+    color: #000;
+}
+body.light .nav-arrows {
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+}
+
+.nav-arrows button {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.search-highlight.search-active {
+    background-color: orange;
+    color: red;
+}
+
+.result-counter {
+    font-size: 12px;
+}
+body.dark .result-counter {
+    color: #000;
+}
+body.light .result-counter {
+    color: #fff;
+}
+#money-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+}
+

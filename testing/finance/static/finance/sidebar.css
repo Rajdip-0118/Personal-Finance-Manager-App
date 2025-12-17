@@ -1,0 +1,101 @@
+/* Sidebar styles */
+.sidebar {
+  width: 70px;  /* collapsed by default */
+  background: linear-gradient(180deg, #3C0052 0%, #8f6003 100%);
+  padding: 20px 0;
+  transition: width 0.3s;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+/* Expand on hover */
+.sidebar:hover {
+  width: 250px;
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  margin: 8px 0;
+  color: #e0e0e0;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.3s;
+  position: relative;
+}
+
+.sidebar a span {
+  margin-right: 15px;
+  font-size: 1.2em;
+  transition: font-size 0.3s, margin 0.3s;
+}
+
+.sidebar a:hover { background-color: rgba(255,255,255,0.1); }
+
+/* Hide labels when collapsed */
+.sidebar .label {
+  display: none;
+}
+.sidebar:hover .label {
+  display: inline;
+}
+
+/* Enlarge & center icons when collapsed */
+.sidebar a {
+  justify-content: center;
+}
+.sidebar:hover a {
+  justify-content: flex-start;
+}
+.sidebar a span {
+  font-size: 1.8em;
+  margin-right: 0;
+}
+.sidebar:hover a span {
+  font-size: 1.2em;
+  margin-right: 15px;
+}
+
+/* Tooltip styling */
+.sidebar a::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #000;
+  color: #fff;
+  font-size: 0.8em;
+  padding: 5px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.sidebar a:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(10px);
+}
+/* Active link highlight */
+.sidebar a.active {
+  background: rgba(255, 255, 255, 0.2); /* subtle highlight */
+  border-radius: 8px;
+  font-weight: bold;
+}
+/* Flying Money Background */
+#money-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+}

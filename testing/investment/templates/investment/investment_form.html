@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Investment</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'investment/theme.css' %}">
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+    <!-- Popup Messages -->
+    <div id="popup-messages">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="popup-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+<header>
+    {% include 'core/header.html' %}
+</header>
+<div style="display: flex; min-height: calc(100vh - 100px);">
+{% include 'investment/sidebar.html' %}
+<main style="flex: 1;">
+    <h1 class="page-title">
+        {% if form.instance.pk %}✏️ Edit{% else %}➕ Add{% endif %} Investment
+    </h1>
+
+    <div class="card">
+        <form method="POST" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">Investment Name:</label>
+                {{ form.name }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.investment_type.id_for_label }}">Investment Type:</label>
+                {{ form.investment_type }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.amount.id_for_label }}">Amount:</label>
+                {{ form.amount }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.expected_return.id_for_label }}">Expected Return (%):</label>
+                {{ form.expected_return }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.start_date.id_for_label }}">Start Date:</label>
+                {{ form.start_date }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.end_date.id_for_label }}">End Date:</label>
+                {{ form.end_date }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.frequency.id_for_label }}">Frequency:</label>
+                {{ form.frequency }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="save-button">💾 Save Investment</button>
+                <!-- <a href="{% url 'investment_list' %}" class="cancel-button">Cancel</a> -->
+                <a href="{% url 'investment_list' %}"> <button type="button" class="delete-button">Cancel</button> </a>
+            </div>
+        </form>
+    </div>
+</main>
+</div>
+<footer>
+    {% include 'core/footer.html' %}
+  </footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const typeSelect = document.getElementById("id_investment_type");
+    const freqSelect = document.getElementById("id_frequency");
+
+    // Match your model's choices exactly
+    const autoFreq = {
+        "RD": "Monthly",
+        "Stock": "Yearly",
+        "Mutual Fund": "Yearly",
+        "ETF": "Yearly",
+        "Crypto": "Yearly",
+        "Real Estate": "Yearly",
+        "Gold": "Yearly"
+    };
+
+    function updateFrequency() {
+        const selectedType = typeSelect.value;
+        const suggestion = autoFreq[selectedType];
+
+        if (suggestion) {
+            // Select the correct option
+            for (let option of freqSelect.options) {
+                if (option.text === suggestion || option.value === suggestion) {
+                    option.selected = true;
+                    break;
+                }
+            }
+            // Lock dropdown
+            freqSelect.classList.add("locked");
+        } else {
+            // Unlock for manual input (FD, Bond, Other)
+            freqSelect.classList.remove("locked");
+        }
+    }
+
+    // Run once on page load and whenever user changes type
+    updateFrequency();
+    typeSelect.addEventListener("change", updateFrequency);
+});
+// Fetch expected return from backend dynamically
+document.addEventListener("DOMContentLoaded", function () {
+  const typeSelect = document.getElementById("id_investment_type");
+  const expectedField = document.getElementById("id_expected_return");
+
+  if (!typeSelect || !expectedField) return;
+
+  function updateExpectedReturn(type) {
+    const url = "{% url 'get_expected_return' %}?type=" + encodeURIComponent(type);
+    fetch(url, { credentials: "same-origin" })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.expected_return != null) {
+          expectedField.value = data.expected_return;
+        }
+      })
+      .catch(() => {});
+  }
+
+  typeSelect.addEventListener("change", function () {
+    if (this.value) updateExpectedReturn(this.value);
+  });
+});
+</script>
+
+</body>
+</html>
+
+ {% comment %} Fetch expected return based on investment type {% endcomment %}
+{% comment %} function updateExpectedReturn(type) {
+    fetch(`/get_expected_return/?type=${type}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.expected_return) {
+                document.getElementById('id_expected_return').value = data.expected_return;
+            }
+        });
+} {% endcomment %}
+{% comment %} function updateExpectedReturn(type) {
+  const url = `/investment/get_expected_return/?type=${encodeURIComponent(type)}`;
+  console.log("Fetching:", url);
+  fetch(url, { credentials: "same-origin" })        // ensure session cookie is sent
+    .then(r => {
+      console.log("HTTP status:", r.status, r.headers.get("content-type"));
+      return r.text();
+    })
+    .then(text => {
+      console.log("Raw response text:", text);
+      try {
+        const data = JSON.parse(text);
+        console.log("Parsed JSON:", data);
+        const field = document.getElementById('id_expected_return');
+        if (field && data.expected_return != null) field.value = data.expected_return;
+      } catch (e) {
+        console.error("JSON parse failed:", e);
+      }
+    })
+    .catch(err => console.error("Fetch error:", err));
+} {% endcomment %}
+{% comment %} document.addEventListener("DOMContentLoaded", function () {
+  const typeSelect = document.getElementById("id_investment_type");
+  const expectedField = document.getElementById("id_expected_return");
+
+  if (!typeSelect || !expectedField) {
+    console.warn("Form fields not found. Check element IDs.");
+    return;
+  }
+
+  // 🔹 Auto fetch expected return when type changes
+  function updateExpectedReturn(type) {
+    const url = `/investment/get-expected-return/?type=${encodeURIComponent(type)}`;
+    console.log("Fetching:", url);
+    fetch(url, { credentials: "same-origin" })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(data => {
+        console.log("Response:", data);
+        if (data.expected_return != null) {
+          expectedField.value = data.expected_return;
+        }
+      })
+      .catch(err => console.error("Fetch error:", err));
+  }
+
+  // 🔹 Bind change event
+  typeSelect.addEventListener("change", function () {
+    const selectedType = this.value;
+    console.log("Investment type selected:", selectedType);
+    if (selectedType) updateExpectedReturn(selectedType);
+  });
+}); {% endcomment %}

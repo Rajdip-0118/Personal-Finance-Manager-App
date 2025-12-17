@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - Personal Financial Manager</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+</head>
+
+<canvas id="money-bg"></canvas>
+
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+  <header>
+    {% include 'core/header.html' %}
+  </header>
+
+  <main>
+    <h1 class="page-title">🔒 Privacy Policy</h1>
+
+    <div class="card">
+      <p>
+        The <strong>Personal Financial Manager (PFM)</strong> application values your privacy and is committed
+        to protecting your personal and financial information. This Privacy Policy explains how we collect,
+        use, store, and safeguard your data when using the platform.
+      </p>
+
+      <h3>1. Information We Collect</h3>
+      <p>
+        We collect the following types of information to provide core functionality:
+      </p>
+      <ul>
+        <li><strong>Account Information:</strong> Username, email address, and password (stored in encrypted form).</li>
+        <li><strong>Financial Data:</strong> Income, expenses, budgets, savings goals, and investment details provided by you.</li>
+        <li><strong>System Data:</strong> Browser type, device information, and timestamps for analytics and security.</li>
+      </ul>
+
+      <h3>2. How We Use Your Information</h3>
+      <p>Your data is used solely to operate and improve the application, including:</p>
+      <ul>
+        <li>Providing accurate financial tracking and analytics.</li>
+        <li>Maintaining secure user authentication and session management.</li>
+        <li>Improving system performance and user experience.</li>
+        <li>Notifying users of updates or system-related information (if enabled).</li>
+      </ul>
+
+      <h3>3. Data Storage and Security</h3>
+      <p>
+        All personal and financial data is stored securely using Django’s ORM and encryption standards.
+        Passwords are hashed using strong algorithms and are never stored in plain text.
+        We employ administrative, technical, and physical safeguards to protect your data.
+      </p>
+
+      <h3>4. Data Sharing and Disclosure</h3>
+      <p>
+        We do not sell, trade, or rent users’ personal information. Data is shared only:
+      </p>
+      <ul>
+        <li>With your consent, for specific services or integrations (e.g., bank APIs, if implemented).</li>
+        <li>To comply with legal obligations or valid government requests.</li>
+        <li>To protect the security and integrity of the application against misuse.</li>
+      </ul>
+
+      <h3>5. Cookies and Tracking</h3>
+      <p>
+        The PFM application may use session cookies to maintain secure logins and enhance functionality.
+        Cookies do not store personal or financial data and can be managed through your browser settings.
+      </p>
+
+      <h3>6. Data Retention</h3>
+      <p>
+        Your data is retained as long as your account remains active. Upon account deletion,
+        all personal and financial data is permanently removed from the system in accordance
+        with standard data retention policies.
+      </p>
+
+      <h3>7. User Rights</h3>
+      <p>
+        You have full control over your data. You may:
+      </p>
+      <ul>
+        <li>View, edit, or delete your financial information at any time.</li>
+        <li>Request complete deletion of your account and all associated data.</li>
+        <li>Opt out of notifications or data-sharing features.</li>
+      </ul>
+
+      <h3>8. Third-Party Integrations</h3>
+      <p>
+        If future updates include third-party financial APIs or tools, data exchange will occur
+        securely and only with explicit user consent. PFM is not responsible for third-party privacy practices.
+      </p>
+
+      <h3>9. Policy Updates</h3>
+      <p>
+        We may update this Privacy Policy periodically to reflect new features or legal requirements.
+        Users will be notified of significant updates within the application interface.
+        Continued use after changes implies acceptance of the revised policy.
+      </p>
+
+      <h3>10. Contact Information</h3>
+      <p>
+        For any questions or concerns regarding this Privacy Policy, please contact us at:
+        <br />
+        📧 <a href="mailto:support@financeapp.com">support@financeapp.com</a>
+      </p>
+
+      <h3>11. Acknowledgment</h3>
+      <p>
+        By using the Personal Financial Manager (PFM), you acknowledge that you have read and understood
+        this Privacy Policy and agree to the collection and use of your information as outlined.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    {% include 'core/footer.html' %}
+  </footer>
+  
+<script>
+const canvas = document.getElementById("money-bg");
+const ctx = canvas.getContext("2d");
+
+canvas.style.position = "fixed";
+canvas.style.top = "0";
+canvas.style.left = "0";
+canvas.style.width = "100%";
+canvas.style.height = "100%";
+canvas.style.zIndex = "-1";
+canvas.style.pointerEvents = "none";
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+const symbols = ["₹", "$", "€", "£", "¥", "₩", "₽", "₺", "₦", "₱", "₫", "₴", "฿"];
+const colors = ["#00bfa6", "#1db954", "#4afcb3", "#2ecc71"];
+
+// Balanced, smooth, non-stretchy animation
+function makeItems() {
+  const list = [];
+  for (let i = 0; i < 160; i++) {
+    list.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: 8 + Math.random() * 10,
+      speed: 0.08 + Math.random() * 0.2,
+      drift: (Math.random() - 0.5) * 0.1,
+      alpha: 0.08 + Math.random() * 0.2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+    });
+  }
+  return list;
+}
+
+let items = makeItems();
+
+function draw() {
+  // subtle fade effect for smooth motion
+  ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (const i of items) {
+    i.y += i.speed; // no stretch factor
+    i.x += i.drift;
+
+    if (i.y > canvas.height + 30) {
+      i.y = -30;
+      i.x = Math.random() * canvas.width;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = i.alpha;
+    ctx.fillStyle = i.color;
+    ctx.font = `${i.size}px "Segoe UI", sans-serif`;
+    ctx.shadowColor = i.color;
+    ctx.shadowBlur = 4;
+    ctx.fillText(i.symbol, i.x, i.y);
+    ctx.restore();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
+</html>

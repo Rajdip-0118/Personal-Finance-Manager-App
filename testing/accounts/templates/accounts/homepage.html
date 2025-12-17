@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Personal Finance Manager - Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --primary-gold-dim: #cca900;
+            --accent-blue: #00d2ff;
+            --bg-dark: #050a0c;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated Background Blobs */
+        .background-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.15), transparent 25%),
+                        radial-gradient(circle at 85% 30%, rgba(0, 210, 255, 0.1), transparent 25%);
+            animation: pulseBackground 10s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseBackground {
+            0% { opacity: 0.5; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* Particle Canvas Layer */
+        #money-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Layout */
+        .main-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            margin-top: 60px;
+            margin-bottom: 80px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #ffffff, #b3b3b3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        h1 span {
+            background: linear-gradient(to right, var(--primary-gold), #ffeb80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 40px auto;
+            line-height: 1.6;
+        }
+
+        /* CTA Button */
+        .cta-btn {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dim));
+            color: #000;
+            font-weight: 700;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+            perspective: 1000px;
+        }
+
+        .feature-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0; /* For animation */
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        /* Staggered Animation Delays */
+        .feature-card:nth-child(1) { animation-delay: 0.2s; }
+        .feature-card:nth-child(2) { animation-delay: 0.4s; }
+        .feature-card:nth-child(3) { animation-delay: 0.6s; }
+        .feature-card:nth-child(4) { animation-delay: 0.8s; }
+        .feature-card:nth-child(5) { animation-delay: 1.0s; }
+        .feature-card:nth-child(6) { animation-delay: 1.2s; }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--primary-gold);
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover .icon-box {
+            transform: rotate(10deg);
+            background: var(--primary-gold);
+            color: #000;
+        }
+
+        .feature-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .feature-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .hero-section { margin-top: 30px; }
+            .main-wrapper { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-gradient"></div>
+    <canvas id="money-bg"></canvas>
+
+    {% include "accounts/navbar.html" %}
+
+    <div class="main-wrapper">
+        
+        <div class="hero-section">
+            <h1>Master Your <br><span>Financial Future</span></h1>
+            <p class="hero-subtitle">
+                The intelligent personal assistant for managing wealth, tracking budgets, 
+                and visualizing your path to financial freedom.
+            </p>
+            <a href="{% url 'register' %}" class="cta-btn">Get Started Now</a>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="icon-box"><i class="fas fa-wallet"></i></div>
+                <div class="feature-title">Smart Tracking</div>
+                <div class="feature-desc">Monitor your income and expenses effortlessly with real-time categorization.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box"><i class="fas fa-chart-line"></i></div>
+                <div class="feature-title">Investment Portfolio</div>
+                <div class="feature-desc">Track your stocks, mutual funds, and assets in one unified dashboard.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box"><i class="fas fa-chart-pie"></i></div>
+                <div class="feature-title">Visual Analytics</div>
+                <div class="feature-desc">Visualize with interactive charts and deep insights.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box"><i class="fas fa-layer-group"></i></div>
+                <div class="feature-title">Multi-Budgeting</div>
+                <div class="feature-desc">Create specific budgets for travel, food, or lifestyle and stay on track.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box"><i class="fas fa-envelope-open-text"></i></div>
+                <div class="feature-title">Smart Alerts</div>
+                <div class="feature-desc">Get instant in-app alerts and email notifications if you exceed budget limits.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-box"><i class="fas fa-bullseye"></i></div>
+                <div class="feature-title">Goal Setting</div>
+                <div class="feature-desc">Set ambitious savings goals and track your progress automatically.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('money-bg');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        const particleCount = 60;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2;
+                this.color = 'rgba(255, 215, 0, ' + Math.random() * 0.5 + ')'; // Gold color
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Connect particles with lines
+        function connect() {
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    let distance = ((particles[a].x - particles[b].x) ** 2) + 
+                                   ((particles[a].y - particles[b].y) ** 2);
+                    if (distance < (canvas.width/7) * (canvas.height/7)) {
+                        let opacityValue = 1 - (distance / 10000);
+                        ctx.strokeStyle = 'rgba(255, 255, 255,' + (opacityValue * 0.05) + ')';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            connect();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>

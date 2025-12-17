@@ -1,0 +1,288 @@
+/* ===============================
+   THEME BASE
+=============================== */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    transition: background-color 0.4s, color 0.4s;
+}
+
+/* Dark Mode */
+body.dark {
+    background-color: #121212;
+    color: #E0E0E0;
+}
+
+/* Light Mode */
+body.light {
+    background-color: #fff;
+    color: #1a1a1a;
+}
+
+/* Shared */
+main {
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.page-title {
+    text-align: center;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #7b2ff7, #f107a3);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+   text-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ===============================
+   TABLES
+=============================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+body.dark table { background-color: #1E1E1E; }
+body.light table { background-color: #f5f5f5; }
+
+table th, table td {
+    padding: 12px 10px;
+    text-align: center;
+}
+body.light table th {
+    background-color: #00BFA6;
+    color: white;
+    font-weight: bold;
+}
+body.dark table th {
+    background-color: #00BFA6;
+    color: black;
+    font-weight: bold;
+}
+body.light table th,
+body.light table td { border: 1px solid #ddd; }
+body.dark table th,
+body.dark table td { border: 1px solid #333; }
+
+body.light table tr:nth-child(even) { background-color: #f2f2f2; }
+body.dark table tr:nth-child(even) { background-color: #2A2A2A; }
+
+/* ===============================
+   FORMS
+=============================== */
+form {
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+body.dark form { background-color: #1E1E1E; }
+body.light form { background-color: #f5f5f5; }
+
+input, select, textarea, button {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 5px;
+    border: none;
+    outline: none;
+}
+body.dark input, 
+body.dark select, 
+body.dark textarea { background-color: #2C2C2C; color: #E0E0E0; }
+body.light input, 
+body.light select, 
+body.light textarea { background-color: #dedede; color: #1a1a1a; }
+
+button {
+    background-color: #00BFA6;
+    color: black;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+button:hover { background-color: #51f8e1; }
+
+.edit-button { background-color: #c97610; color: black; }
+.delete-button { background-color: #981c37; color: white; }
+.edit-button:hover { background-color: #e0b03a; }
+.delete-button:hover { background-color: #e03a2e; }
+
+/* ===============================
+   CARDS & CHARTS
+=============================== */
+.card {
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    padding: 20px;
+}
+body.dark .card { background-color: #1E1E1E; }
+body.light .card { background-color: #f5f5f5; }
+
+.chart-placeholder {
+    height: 250px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+body.dark .chart-placeholder { background-color: #2C2C2C; color: #888; }
+body.light .chart-placeholder { background-color: #f5f5f5; color: #555; }
+
+/* ===============================
+   RESPONSIVENESS
+=============================== */
+@media (max-width: 768px) {
+    table, thead, tbody, th, td, tr { display: block; width: 100%; }
+    table tr {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 10px;
+    }
+    table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        word-wrap: break-word;
+        border: none;
+        border-bottom: 1px solid #333;
+    }
+    table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        text-align: left;
+        font-weight: bold;
+        color: #aaa;
+        white-space: nowrap;
+    }
+    table th { display: none; }
+}
+
+@media (max-width: 1024px) {
+    main { padding: 15px; }
+    form, .card, .chart-placeholder { width: 100%; }
+}
+@media (max-width: 480px) {
+    header, footer { padding: 10px; font-size: 14px; }
+    button, input, select, textarea { font-size: 14px; padding: 8px; }
+    .chart-placeholder { height: 200px; }
+}
+
+/* ===============================
+   PROGRESS BAR
+=============================== */
+.progress-container {
+    border-radius: 8px;
+    overflow: hidden;
+    height: 24px;
+    margin-top: 5px;
+    position: relative;
+}
+body.dark .progress-container { background-color: #2C2C2C; }
+body.light .progress-container { background-color: #c6c6c6; }
+
+.progress-bar {
+    height: 100%;
+    text-align: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 24px;
+    transition: width 0.6s ease-in-out;
+}
+.progress-low { background: linear-gradient(90deg, #ff4d4d, #cc0000); }
+.progress-medium { background: linear-gradient(90deg, #ffcc00, #ff9900); }
+.progress-high { background: linear-gradient(90deg, #00cc66, #00994d); }
+
+/* Legend */
+.chart-legend {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+body.dark .chart-legend { color: #dedede; }
+body.light .chart-legend { color: #333; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* ===============================
+   POPUP MESSAGES
+=============================== */
+#popup-messages {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.popup-message {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #fff;
+    min-width: 250px;
+    max-width: 350px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    animation: drop-down 0.5s ease-out;
+    opacity: 1;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.popup-message.success { background: #22c55eee; }
+.popup-message.error { background: #ef4444ed; }
+.popup-message.warning { background: #c78109eb; }
+.popup-message.info { background: #3b83f6ee; }
+
+@keyframes drop-down {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.fade-out { opacity: 0; transform: translateY(-100%); }
+
+/* Tooltip styling */
+body.dark  #date-tooltip {
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    border: 1px solid #555;
+}
+body.light #date-tooltip {
+    background: rgba(255,255,255,0.8);
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+#date-tooltip {
+    display: none;
+    position: absolute;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+}

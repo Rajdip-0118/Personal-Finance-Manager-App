@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings</title>
+{% load static %}
+<link rel="stylesheet" href="{% static 'core/settings.css' %}">
+</head>
+<body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
+<canvas id="money-bg"></canvas>
+<header>{% include 'core/header.html' %}</header>
+
+<div class="settings-container">
+  <div class="settings-header">
+    <h2>⚙️ Settings</h2>
+
+    <div class="theme-toggle" onclick="toggleTheme()">
+      {% if prefs.theme == 'light' %}☀️{% else %}🌙{% endif %}
+    </div>
+  </div>
+
+  <!-- Django messages -->
+  <div id="popup-messages">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="popup-message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="sections-wrapper">
+
+    <!-- General Settings -->
+    <div class="settings-section">
+      <h3>General Settings</h3>
+      <form method="POST" action="{% url 'update_preferences' %}">
+        {% csrf_token %}
+        <input type="hidden" name="theme" id="themeInput" value="{{ prefs.theme }}">
+        <!-- Username Display + Edit -->
+        <div class="form-group display-group">
+          <label>👤 Username</label>
+          <div class="display-wrapper" id="username-wrapper">
+            <span id="username-display">{{ user.username }}</span>
+            <button type="button" class="edit-btn" onclick="toggleEdit('username')">✏️</button>
+          </div>
+          <div class="input-wrapper" id="username-input-wrapper" style="display:none;">
+            <input type="text" id="username-input" name="username" value="{{ user.username }}" required>
+            <button type="button" class="cancel-btn" onclick="toggleEdit('username')">❌</button>
+          </div>
+        </div>
+
+        <!-- Email Display + Edit -->
+        <div class="form-group display-group">
+          <label>📩 Email</label>
+          <div class="display-wrapper" id="email-wrapper">
+            <span id="email-display">{{ user.email }}</span>
+            <button type="button" class="edit-btn" onclick="toggleEdit('email')">✏️</button>
+          </div>
+          <div class="input-wrapper" id="email-input-wrapper" style="display:none;">
+            <input type="email" id="email-input" name="email" value="{{ user.email }}" required>
+            <button type="button" class="cancel-btn" onclick="toggleEdit('email')">❌</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="currency">💱Currency</label>
+          <select id="currency" name="currency"></select>
+        </div>
+        <button type="submit" class="btn">💾 Save Preferences</button>
+      </form>
+    </div>
+
+    <!-- Change Password -->
+    <div class="settings-section">
+      <h3>Change Password</h3>
+      <form method="POST" action="{% url 'settings_view' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="current-password">🔒Current Password</label>
+          <input type="password" name="current_password" id="current-password" placeholder="Enter current password">
+        </div>
+        <div class="form-group">
+          <label for="new-password">🔐New Password</label>
+          <input type="password" name="new_password" id="new-password" placeholder="Enter new password">
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">🔐Confirm New Password</label>
+          <input type="password" name="confirm_password" id="confirm-password" placeholder="Confirm new password">
+        </div>
+        <button class="btn" type="submit">🔒 Update Password</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<footer>{% include 'core/footer.html' %}</footer>
+
+<script>
+  // Sidebar toggle
+    setTimeout(() => {
+    document.querySelectorAll(".popup-message").forEach(msg => {
+      msg.classList.add("fade-out");
+      setTimeout(() => msg.remove(), 500);
+    });
+  }, 3000);
+  
+  function toggleEdit(field) {
+  const displayWrapper = document.getElementById(`${field}-wrapper`);
+  const inputWrapper = document.getElementById(`${field}-input-wrapper`);
+
+  if (inputWrapper.style.display === "none") {
+    // Show input, hide display text
+    displayWrapper.style.display = "none";
+    inputWrapper.style.display = "flex";
+    document.getElementById(`${field}-input`).focus();
+  } else {
+    // Cancel edit mode
+    displayWrapper.style.display = "flex";
+    inputWrapper.style.display = "none";
+    const input = document.getElementById(`${field}-input`);
+    const display = document.getElementById(`${field}-display`);
+    input.value = display.textContent; // reset to old value
+  }
+}
+
+const currencies = 
+[
+    "₹ - Indian Rupee (INR)",
+    "$ - US Dollar (USD)",
+    "€ - Euro (EUR)",
+    "£ - British Pound (GBP)",
+    "¥ - Japanese Yen (JPY)",
+    "A$ - Australian Dollar (AUD)",
+    "C$ - Canadian Dollar (CAD)",
+    "CHF - Swiss Franc (CHF)",
+    "¥ - Chinese Yuan (CNY)",
+    "₩ - South Korean Won (KRW)",
+    "₱ - Sri Lankan Rupee (LKR)",
+    "৳ - Bangla Taka (BDT)",
+    "₪ - Israeli New Sheqel (ILS)",
+    "R$ - Brazilian Real (BRL)",
+    "₽ - Russian Ruble (RUB)",
+    "R - South African Rand (ZAR)",
+    "₩ - South Korean Won (KRW)",
+    "S$ - Singapore Dollar (SGD)",
+    "NZ$ - New Zealand Dollar (NZD)"
+];
+
+const currencySelect = document.getElementById("currency");
+
+currencies.forEach(c => {
+  const option = document.createElement("option");
+  option.value = c.split(" - ")[0];
+  option.textContent = c;
+  currencySelect.appendChild(option);
+});
+
+// Preselect user preferences
+currencySelect.value = "{{ prefs.currency }}";
+
+function toggleTheme() {
+    const body = document.body;
+    body.classList.toggle("light");
+    const theme = body.classList.contains("light") ? "light" : "dark";
+
+    document.querySelector(".theme-toggle").textContent = theme === "light" ? "☀️" : "🌙";
+
+    // Save immediately via fetch
+    fetch("{% url 'update_preferences' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: `theme=${theme}`
+    }).then(response => {
+        console.log("Theme saved:", theme);
+    });
+}
+</script>
+
+<script>
+const canvas = document.getElementById('money-bg');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Draw a few static bills
+for(let i=0;i<20;i++){
+  const x = Math.random() * canvas.width;
+  const y = Math.random() * canvas.height;
+  const size = 80 + Math.random()*100;
+  ctx.fillStyle = `hsl(${100+Math.random()*60} 60% 40%)`;
+  ctx.strokeStyle = "#155d27";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(x, y, size, size*0.55, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#0c2b0a";
+  ctx.font = `${Math.round(size*0.55*0.6)}px serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("$", x+size/2, y+size*0.55/2);
+}
+</script>
+</body>
+</html>

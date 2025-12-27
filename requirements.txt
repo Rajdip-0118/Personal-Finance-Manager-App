@@ -25,3 +25,6 @@ packaging==25.0
 
 #live market
 yfinance==0.2.66
+
+#load env
+python-dotenv==1.2.1

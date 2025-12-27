@@ -6,7 +6,7 @@ from decimal import Decimal
 class SurplusTracker(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     last_surplus = models.DecimalField(max_digits=21, decimal_places=2, default=0)
-    last_rollover_month = models.IntegerField(null=True, blank=True)  # NEW
+    last_rollover_month = models.IntegerField(null=True, blank=True)  
 
     def __str__(self):
         return f"{self.user.username} Surplus Tracker"

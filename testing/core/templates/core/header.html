@@ -9,7 +9,7 @@
 </head>
 <body>
     <nav class="navbar">
-        <!-- Left hamburger -->
+    
         <div class="left-menu">
             <div class="hamburger" id="leftMenuIcon" tabindex="0" aria-label="Open left menu" role="button">
                 <span></span>
@@ -62,7 +62,7 @@
     </nav>
 
     <script>
-        // Left menu toggle
+
         const leftMenuIcon = document.getElementById('leftMenuIcon');
         const leftDropdownMenu = document.getElementById('leftDropdownMenu');
 
@@ -79,11 +79,11 @@
 
         menuLinks.forEach(link => {
             link.addEventListener('click', function() {
-                menuLinks.forEach(l => l.classList.remove('active')); // remove from all
-                this.classList.add('active'); // add to clicked one
+                menuLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active'); 
             });
         });
- // Floating instant search
+
         (function() {
             const input = document.getElementById('searchInput');
             const searchNav = document.getElementById('searchNav');

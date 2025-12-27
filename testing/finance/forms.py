@@ -1,19 +1,18 @@
 from django import forms
-from .models import Income, Expense, RecurringIncome, RecurringExpense #, Category
+from .models import Income, Expense, RecurringIncome, RecurringExpense 
 from django.utils import timezone
 
 class BaseFinanceForm(forms.ModelForm):
-    #Base form for Income and Expense to avoid duplication
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Make all fields required
+
         for field in self.fields:
             if field not in [self._meta.model._meta.pk.name, "end_date"]:
                 self.fields[field].required = True
 
-        # Handle category dropdown (remove "---------" and default to first)
         if 'category' in self.fields:
             model = self._meta.model
             self.fields['category'].choices = model.CATEGORY_CHOICES

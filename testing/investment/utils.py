@@ -1,6 +1,5 @@
 # investment/utils.py
 import yfinance as yf
-from decimal import Decimal
 import datetime as dt
 
 def _annualized_return(start_price, end_price, years):
@@ -26,24 +25,23 @@ def get_expected_return_by_type(inv_type):
     t = (inv_type or "").lower()
 
     mapping = {
-        "stock": lambda: get_yahoo_return("^NSEI"),  # Nifty 50 index in India
-        "etf": lambda: get_yahoo_return("NIFTYBEES.NS"),  # Nifty ETF in India
+        "stock": lambda: get_yahoo_return("^NSEI"),  
+        "etf": lambda: get_yahoo_return("NIFTYBEES.NS"),  
         "crypto": lambda: get_yahoo_return("BTC-INR"),
-        "gold": lambda: get_yahoo_return("GOLDBEES.NS"),  # Gold ETF in India
-        "mutual fund": lambda: get_yahoo_return("^NSMIDCP"),  # or USA’s ^GSPC
-        "bond": lambda: get_yahoo_return("ICICIB22.NS"),  # 10-year ICICI bond yield
-        "real estate": lambda: get_yahoo_return("EMBASSY.NS"),  # US REIT ETF
+        "gold": lambda: get_yahoo_return("GOLDBEES.NS"),  
+        "mutual fund": lambda: get_yahoo_return("^NSMIDCP"),
+        "bond": lambda: get_yahoo_return("ICICIB22.NS"), 
+        "real estate": lambda: get_yahoo_return("EMBASSY.NS"), 
         
     }
 
 
     func = mapping.get(t)
     if not func:
-        return None  # ❌ skip unknown types
+        return None  
 
     rate = func()
     if rate is None:
-        # ❌ do NOT fallback — skip update if live data unavailable
         return None
 
     return rate

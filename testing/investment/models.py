@@ -20,13 +20,12 @@ class Investment(models.Model):
     ]
 
     FREQUENCY_CHOICES = [
-        #('Daily', 'Daily'),
-        #('Weekly', 'Weekly'),
+
         ('Monthly', 'Monthly'),
         ('Quarterly', 'Quarterly'),
         ('Biannual', 'Biannual'),
         ('Yearly', 'Yearly'),
-        #('Once', 'Once'),
+     
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -36,7 +35,7 @@ class Investment(models.Model):
     expected_return = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
-    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, default='Yearly')  # ✅ New field
+    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, default='Yearly') 
     status = models.CharField(max_length=20, choices=[('Active', 'Active'), ('Completed', 'Completed')], default="Active")
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(default=timezone.now)

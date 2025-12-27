@@ -15,15 +15,13 @@
       <span>📊</span><span class="label">Investment Portfolio</span>
     </a>
 
-    {% comment %} <a href="{% url 'manage_auto_savings' %}" class="{% if request.resolver_match.url_name == 'manage_auto_savings' %}active{% endif %}" data-tooltip="Auto-Savings">
-      <span>⚙️</span><span class="label">Auto-Savings</span>
-    </a> {% endcomment %}
+
 </div>
 
 
 
 <script>
-    // Auto-hide popup messages
+ 
     setTimeout(() => {
         document.querySelectorAll(".popup-message").forEach(msg => {
             msg.classList.add("fade-out");
@@ -31,7 +29,7 @@
         });
     }, 8000);
 
-    // Sidebar toggle
+
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggleBtn');
 
@@ -57,13 +55,13 @@ if (canvas) {
     reset() {
       this.x = Math.random() * innerWidth;
       this.y = Math.random() * innerHeight;
-      const speed = 0.02 + Math.random() * 0.05; // 🐢 Very slow floating
+      const speed = 0.02 + Math.random() * 0.05; 
       const angle = Math.random() * Math.PI * 2;
       this.vx = Math.cos(angle) * speed;
       this.vy = Math.sin(angle) * speed;
       this.size = 60 + Math.random() * 100;
       this.rotation = Math.random() * Math.PI * 2;
-      this.spin = (Math.random() * 2 - 1) * 0.003; // slow spin
+      this.spin = (Math.random() * 2 - 1) * 0.003; 
       this.opacity = 0.7 + Math.random() * 0.3;
       this.life = 0;
       this.maxLife = 1000 + Math.random() * 800;

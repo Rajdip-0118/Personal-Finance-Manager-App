@@ -6,4 +6,4 @@ class SavingsConfig(AppConfig):
     name = 'savings'
 
     def ready(self):
-        import savings.signals  # noqa
+        import savings.signals  

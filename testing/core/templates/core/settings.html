@@ -100,7 +100,7 @@
 <footer>{% include 'core/footer.html' %}</footer>
 
 <script>
-  // Sidebar toggle
+
     setTimeout(() => {
     document.querySelectorAll(".popup-message").forEach(msg => {
       msg.classList.add("fade-out");
@@ -113,17 +113,17 @@
   const inputWrapper = document.getElementById(`${field}-input-wrapper`);
 
   if (inputWrapper.style.display === "none") {
-    // Show input, hide display text
+
     displayWrapper.style.display = "none";
     inputWrapper.style.display = "flex";
     document.getElementById(`${field}-input`).focus();
   } else {
-    // Cancel edit mode
+
     displayWrapper.style.display = "flex";
     inputWrapper.style.display = "none";
     const input = document.getElementById(`${field}-input`);
     const display = document.getElementById(`${field}-display`);
-    input.value = display.textContent; // reset to old value
+    input.value = display.textContent; 
   }
 }
 
@@ -159,7 +159,7 @@ currencies.forEach(c => {
   currencySelect.appendChild(option);
 });
 
-// Preselect user preferences
+
 currencySelect.value = "{{ prefs.currency }}";
 
 function toggleTheme() {
@@ -169,7 +169,7 @@ function toggleTheme() {
 
     document.querySelector(".theme-toggle").textContent = theme === "light" ? "☀️" : "🌙";
 
-    // Save immediately via fetch
+
     fetch("{% url 'update_preferences' %}", {
         method: "POST",
         headers: {
@@ -189,7 +189,7 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Draw a few static bills
+
 for(let i=0;i<20;i++){
   const x = Math.random() * canvas.width;
   const y = Math.random() * canvas.height;

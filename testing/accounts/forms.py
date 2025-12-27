@@ -12,7 +12,7 @@ USERNAME_VALIDATOR = RegexValidator(
 class CreateUserForm(UserCreationForm):
     email = forms.EmailField(required=True)
 
-    # override the form field (keeps form-level validation)
+   
     username = forms.CharField(
         max_length=150,
         required=True,
@@ -26,7 +26,6 @@ class CreateUserForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # ensure the form field uses our validator
         self.fields['username'].validators = [USERNAME_VALIDATOR]
 
         field_styles = {
@@ -52,16 +51,16 @@ class CreateUserForm(UserCreationForm):
         try:
             model_field = model._meta.get_field('username')
         except Exception:
-            # fallback to default behaviour if field not found
+  
             return super()._post_clean()
 
         original_validators = list(model_field.validators)
         try:
-            # set model validators to exactly what the form uses
+     
             model_field.validators = list(self.fields['username'].validators)
             super()._post_clean()
         finally:
-            # restore original validators (important for other requests)
+   
             model_field.validators = original_validators
 
     def clean_email(self):

@@ -52,7 +52,7 @@
 <footer>{% include 'core/footer.html' %}</footer>
 
 <script>
-//prediction of expenses
+
 document.addEventListener('DOMContentLoaded', function() {
     const nameField = document.getElementById('id_name');
     const categoryField = document.getElementById('id_category');
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-//---------------------------------------------------------------------------
+
 
 function getThemeColors() {
     const isDark = document.body.classList.contains("dark");
@@ -118,7 +118,7 @@ function createExpenseChart() {
                         font: { size: 14 } 
                     } 
                 },
-                title: {                        // ← Added header
+                title: {                       
                     display: true,
                     text: "💸 Expense Breakdown by Categories",
                     color: colors.text,
@@ -132,10 +132,10 @@ function createExpenseChart() {
     });
 }
 
-// initialize
+
 let expenseChart = createExpenseChart();
 
-// if theme switches dynamically, destroy and recreate
+
 document.addEventListener("themeChanged", () => {
     expenseChart.destroy();
     expenseChart = createExpenseChart();

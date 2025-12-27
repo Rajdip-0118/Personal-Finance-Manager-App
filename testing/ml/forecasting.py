@@ -5,7 +5,7 @@ from sklearn.linear_model import LinearRegression
 from finance.models import Expense
 
 
-# ---- Forecast helper ----
+
 def linear_regression_forecast(df_input, days_in_future):
     """
     Linear regression forecast with 3-tier logic:
@@ -21,12 +21,10 @@ def linear_regression_forecast(df_input, days_in_future):
     df_input["day_index"] = np.arange(n)
     y = df_input["y"].values
 
-    # --- Fallback: use average when data is limited ---
     if n < 20:
         avg_daily = max(float(np.mean(y)), 0)
         return round(avg_daily * days_in_future, 2)
 
-    # --- Linear regression for >=20 samples ---
     X = df_input[["day_index"]].values
     model = LinearRegression()
     model.fit(X, y)
@@ -40,7 +38,7 @@ def linear_regression_forecast(df_input, days_in_future):
     return round(float(preds.sum()), 2)
 
 
-# ---- Load and preprocess expenses ----
+
 def get_daily_expenses(user):
     """
     Returns a DataFrame of daily expenses for the given user.
@@ -55,7 +53,7 @@ def get_daily_expenses(user):
     df["ds"] = pd.to_datetime(df["ds"])
     df["y"] = df["y"].astype(float)
 
-    # Aggregate daily totals and fill missing days with 0
+
     df_daily = (
         df.groupby("ds", as_index=False)["y"].sum()
         .set_index("ds")
@@ -67,7 +65,7 @@ def get_daily_expenses(user):
     return df_daily
 
 
-# ---- Helper: Drop missing (zero-activity) months ----
+
 def drop_missing_months(df):
     """
     Removes months where total spending is zero.
@@ -80,25 +78,24 @@ def drop_missing_months(df):
     return cleaned_df
 
 
-# ---- Generic month forecast ----
 def forecast_month(df_daily_all, current_month, include_current=False):
     """
     Forecasts spending for the current or next month based on historical data.
     include_current=True means use current month data for next month's forecast.
     """
-    # Clean data
+
     df_daily_all = drop_missing_months(df_daily_all)
 
-    # Separate previous and current months
+ 
     prev_months_df = df_daily_all[df_daily_all["ds"].dt.to_period("M") < current_month]
     current_month_df = df_daily_all[df_daily_all["ds"].dt.to_period("M") == current_month]
 
     if include_current:
-        # NEXT month forecast: use both previous and current data
+
         df_train = pd.concat([prev_months_df, current_month_df], ignore_index=True)
         target_month = current_month + 1
     else:
-        # THIS month forecast: use only previous months
+
         df_train = prev_months_df
         target_month = current_month
 
@@ -109,7 +106,7 @@ def forecast_month(df_daily_all, current_month, include_current=False):
     return linear_regression_forecast(df_train, days_in_target_month)
 
 
-# ---- Spent so far (Current Month) ----
+
 def spent_so_far_this_month(df_daily_all, current_month):
     """
     Returns total spent so far in the current month.
@@ -122,7 +119,7 @@ def spent_so_far_this_month(df_daily_all, current_month):
     return spent_sum if spent_sum > 0 else "Nothing spent so far"
 
 
-# ---- Wrapper ----
+
 def get_user_expense_forecast(user, forecast_date=None):
     """
     Returns user's expense summary:

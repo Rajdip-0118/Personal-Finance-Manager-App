@@ -130,8 +130,8 @@ window.addEventListener('DOMContentLoaded', () => {
             msg.style.transition = 'opacity 1s, transform 1s';
             msg.style.opacity = '0';
             msg.style.transform = 'translateY(-20px)';
-            setTimeout(() => msg.remove(), 1000); // remove from DOM after fade
-        }, 5000); // 5 seconds display
+            setTimeout(() => msg.remove(), 1000); 
+        }, 5000); 
     });
 });
 
@@ -147,11 +147,11 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// 💰💸₹🪙🎁💲💳💵 — finance themed emojis
+
 const emojis = ['💰','💸','₹','🪙','🎁','💲','💳','💵'];
 const count = 70;
 
-// Center-safe area (no emojis here)
+
 const safeZone = {
     x1: canvas.width * 0.3,
     x2: canvas.width * 0.7,

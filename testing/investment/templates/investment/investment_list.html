@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{% static 'investment/theme.css' %}">
 </head>
 <body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
-    <!-- Popup Messages -->
+
     <div id="popup-messages">
         {% if messages %}
             {% for message in messages %}
@@ -23,14 +23,13 @@
 <main style="flex: 1;">
     <h1 class="page-title">📃 My Investments</h1>
 
-        <!-- Manage Goals Card -->
+        >
             <div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
                 <h2>⚙️ Manage Investments</h2>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
 
                     
 
-                    <!-- Filters inline -->
                     <label style="display:flex; align-items:center; gap:4px; margin-left:10px;">
                         <input type="radio" name="filter" value="active" id="filter-active"
                             {% if filter_type == 'active' %}checked{% endif %}
@@ -46,16 +45,8 @@
                             {% if not filter_type or filter_type == 'all' %}checked{% endif %}
                             onchange="applyFilter(this.value)"> All Investments
                     </label>
-                    <!-- Add New Investment Button -->
                     <a href="{% url 'add_investment' %}"><button>➕ Add New Investment</button></a>
-                    {% comment %} <!-- Delete Selected Investments -->
-                    <form id="delete-selected-form" action="{% url 'delete_selected_investments' %}" method="post" style="margin:0; padding:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="selected_ids" id="selected-ids">
-                        <button type="submit" class="delete-button" onclick="return confirm('Delete selected investments (refund balances)?')">🗑️ Delete Selected Investments</button>
-                    </form> {% endcomment %}
-
-                    <!-- Delete All Investments -->
+              
                     <form action="{% url 'delete_all_investments' %}" method="post" style="margin:0; padding:0;">
                         {% csrf_token %}
                         <button type="submit" class="delete-button" onclick="return confirm('Delete all investments (refund balances)?')">🗑️ Delete All Investments</button>
@@ -108,7 +99,6 @@
 
         </table>
 
-        <!-- Pagination -->
             <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:nowrap; gap:15px;">
                 <div style="white-space:nowrap; font-weight:bold; color:var(--text-color);">
                     <h2>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</h2>
@@ -147,7 +137,6 @@
     {% include 'core/footer.html' %}
 </footer>
 <script>
-    // Apply filter function
         function applyFilter(value) {
                     const params = new URLSearchParams(window.location.search);
                     if(value === 'all') {
@@ -155,7 +144,7 @@
                     } else {
                         params.set('filter', value);
                     }
-                    params.set('page', 1); // reset to first page
+                    params.set('page', 1);
                     window.location.search = params.toString();
                 }
 </script>

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{% static 'investment/theme.css' %}">
 </head>
 <body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
-    <!-- Popup Messages -->
+
     <div id="popup-messages">
         {% if messages %}
             {% for message in messages %}
@@ -67,7 +67,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="save-button">💾 Save Investment</button>
-                <!-- <a href="{% url 'investment_list' %}" class="cancel-button">Cancel</a> -->
+                
                 <a href="{% url 'investment_list' %}"> <button type="button" class="delete-button">Cancel</button> </a>
             </div>
         </form>
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const typeSelect = document.getElementById("id_investment_type");
     const freqSelect = document.getElementById("id_frequency");
 
-    // Match your model's choices exactly
+
     const autoFreq = {
         "RD": "Monthly",
         "Stock": "Yearly",
@@ -99,26 +99,26 @@ document.addEventListener("DOMContentLoaded", function() {
         const suggestion = autoFreq[selectedType];
 
         if (suggestion) {
-            // Select the correct option
+     
             for (let option of freqSelect.options) {
                 if (option.text === suggestion || option.value === suggestion) {
                     option.selected = true;
                     break;
                 }
             }
-            // Lock dropdown
+     
             freqSelect.classList.add("locked");
         } else {
-            // Unlock for manual input (FD, Bond, Other)
+ 
             freqSelect.classList.remove("locked");
         }
     }
 
-    // Run once on page load and whenever user changes type
+   
     updateFrequency();
     typeSelect.addEventListener("change", updateFrequency);
 });
-// Fetch expected return from backend dynamically
+
 document.addEventListener("DOMContentLoaded", function () {
   const typeSelect = document.getElementById("id_investment_type");
   const expectedField = document.getElementById("id_expected_return");
@@ -145,69 +145,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </body>
 </html>
-
- {% comment %} Fetch expected return based on investment type {% endcomment %}
-{% comment %} function updateExpectedReturn(type) {
-    fetch(`/get_expected_return/?type=${type}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.expected_return) {
-                document.getElementById('id_expected_return').value = data.expected_return;
-            }
-        });
-} {% endcomment %}
-{% comment %} function updateExpectedReturn(type) {
-  const url = `/investment/get_expected_return/?type=${encodeURIComponent(type)}`;
-  console.log("Fetching:", url);
-  fetch(url, { credentials: "same-origin" })        // ensure session cookie is sent
-    .then(r => {
-      console.log("HTTP status:", r.status, r.headers.get("content-type"));
-      return r.text();
-    })
-    .then(text => {
-      console.log("Raw response text:", text);
-      try {
-        const data = JSON.parse(text);
-        console.log("Parsed JSON:", data);
-        const field = document.getElementById('id_expected_return');
-        if (field && data.expected_return != null) field.value = data.expected_return;
-      } catch (e) {
-        console.error("JSON parse failed:", e);
-      }
-    })
-    .catch(err => console.error("Fetch error:", err));
-} {% endcomment %}
-{% comment %} document.addEventListener("DOMContentLoaded", function () {
-  const typeSelect = document.getElementById("id_investment_type");
-  const expectedField = document.getElementById("id_expected_return");
-
-  if (!typeSelect || !expectedField) {
-    console.warn("Form fields not found. Check element IDs.");
-    return;
-  }
-
-  // 🔹 Auto fetch expected return when type changes
-  function updateExpectedReturn(type) {
-    const url = `/investment/get-expected-return/?type=${encodeURIComponent(type)}`;
-    console.log("Fetching:", url);
-    fetch(url, { credentials: "same-origin" })
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then(data => {
-        console.log("Response:", data);
-        if (data.expected_return != null) {
-          expectedField.value = data.expected_return;
-        }
-      })
-      .catch(err => console.error("Fetch error:", err));
-  }
-
-  // 🔹 Bind change event
-  typeSelect.addEventListener("change", function () {
-    const selectedType = this.value;
-    console.log("Investment type selected:", selectedType);
-    if (selectedType) updateExpectedReturn(selectedType);
-  });
-}); {% endcomment %}

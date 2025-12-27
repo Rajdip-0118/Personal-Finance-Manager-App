@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
-from urllib import request
 from django.shortcuts import render, redirect
 from dateutil.relativedelta import relativedelta
 from .models import Expense, Income, RecurringIncome, RecurringExpense
 from django.utils import timezone
-from django.db.models import Sum, F, Q
+from django.db.models import Sum
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models.functions import TruncMonth, ExtractWeek, ExtractMonth, TruncYear, ExtractYear
@@ -56,7 +55,6 @@ def predict_expense_category(request):
         return JsonResponse({"category": "Miscellaneous", "error": str(e)})
 
 
-# Create your views here.
 
 @login_required
 def add_expense(request):
@@ -169,7 +167,7 @@ def edit_expense(request, id):
                 request.user,
                 updated.date.year,
                 updated.date.month
-            ) + expense.amount  # add back old amount
+            ) + expense.amount 
 
             if available < updated.amount:
                 messages.error(
@@ -202,7 +200,6 @@ def upload_income_csv(request):
 
     csv_file = request.FILES.get("csv_file")
 
-    # File size limit (1MB)
     if csv_file.size > 1048576:
         messages.error(request, "File too large! Please upload a CSV under 1 MB.")
         return redirect("add_income")
@@ -215,14 +212,10 @@ def upload_income_csv(request):
         file_data = csv_file.read().decode("utf-8").splitlines()
         reader = csv.DictReader(file_data)
         
-        # ===== Dashboard Hint Feature =====
-        # 🏦 Detect real bank statement
         if is_bank_statement_csv(reader.fieldnames):
             messages.info(request, "🏦 This appears to be a real bank statement. Please upload it using the Bank Statement Upload section on your dashboard.")
             return redirect("dashboard")
-        # ==================================
-
-        # Normalize headers
+    
         field_map = normalize_headers(reader.fieldnames)
 
         required_fields = ["date", "source", "amount"]
@@ -233,16 +226,13 @@ def upload_income_csv(request):
 
         imported_count = 0
         skipped_count = 0
-        affected_categories = set()  # track categories if needed later
+        affected_categories = set()  
 
         for row in reader:
-            # 1️⃣ Date
             date_str = normalize_date(row.get(field_map.get("date")))
 
-            # 2️⃣ Source (e.g., Salary, Interest)
             source = clean_value(row.get(field_map.get("source")), default="Unknown Income")
 
-            # 3️⃣ Amount (clean ₹, commas, spaces)
             amount_raw = row.get(field_map.get("amount"))
             amount = Decimal("0")
             if amount_raw:
@@ -252,16 +242,14 @@ def upload_income_csv(request):
                 except:
                     amount = Decimal("0")
 
-            # 4️⃣ Category (optional)
             raw_category = clean_value(row.get(field_map.get("category")), default="")
             category = normalize_income_category(raw_category) if raw_category else ml_predict_income_category([source])[0]
 
-            # Skip invalid rows
+       
             if not date_str or not source or amount == 0:
                 skipped_count += 1
                 continue
 
-            # Save to DB
             Income.objects.create(
                 date=date_str,
                 source=source,
@@ -271,15 +259,12 @@ def upload_income_csv(request):
             )
             imported_count += 1
             affected_categories.add(category)
-            
-        #all rows skipped
+   
         if imported_count == 0:
-            # Forcefully clear all queued messages
-            list(messages.get_messages(request))  # consumes all messages
+            list(messages.get_messages(request)) 
             messages.warning(request, "⚠️ No incomes were imported. All rows were skipped due to validation.") 
             return redirect("income_history")   
 
-        #✅ Summary message
         summary_msg = (
             f"✅ CSV Upload Complete! Imported: {imported_count}, "
             f"Skipped: {skipped_count}, "
@@ -305,7 +290,6 @@ def upload_expense_csv(request):
         messages.error(request, "Please upload a CSV file.")
         return redirect("add_expense")
 
-    # File size limit: 1MB
     if csv_file.size > 1048576:
         messages.error(request, "File too large! Please upload a CSV under 1 MB.")
         return redirect("add_expense")
@@ -320,7 +304,6 @@ def upload_expense_csv(request):
         file_data = csv_file.read().decode("utf-8").splitlines()
         reader = csv.DictReader(file_data)
 
-        # 🏦 Detect real bank statement
         if is_bank_statement_csv(reader.fieldnames):
             messages.info(
                 request,
@@ -363,7 +346,6 @@ def upload_expense_csv(request):
 
             date_obj = datetime.fromisoformat(date_str).date()
 
-            # ✅ MONTH-LEVEL VALIDATION
             available = calculate_monthly_surplus(
                 request.user,
                 date_obj.year,
@@ -400,7 +382,6 @@ def upload_expense_csv(request):
             )
             return redirect("expense_log")
 
-        # Budget warnings
         for category in affected_categories:
             dummy_expense = Expense(user=request.user, category=category)
             check_budget_warnings(request, dummy_expense)
@@ -428,7 +409,7 @@ def upload_bank_statement(request):
         messages.error(request, "Please upload a CSV file.")
         return redirect("dashboard")
 
-    if csv_file.size > 1572864:  # 1.5 MB
+    if csv_file.size > 1572864: 
         messages.error(request, "CSV file too large (max 1.5 MB).")
         return redirect("dashboard")
 
@@ -508,7 +489,7 @@ def upload_bank_statement(request):
                     skipped += 1
                     continue
 
-                # ---------- INCOME ----------
+                
                 if txn_type == "income":
                     category = ml_predict_income_category([description])[0]
                     Income.objects.create(
@@ -521,7 +502,7 @@ def upload_bank_statement(request):
                     imported_income += 1
                     continue
 
-                # ---------- EXPENSE (MONTH-LEVEL VALIDATION) ----------
+               
                 available = calculate_monthly_surplus(
                     request.user,
                     date_obj.year,
@@ -586,7 +567,7 @@ def expense_log(request):
     start_date = None
     end_date = timezone.now().date()
 
-    # --- Custom Range ---
+
     custom_start = request.GET.get('start')
     custom_end = request.GET.get('end')
 
@@ -608,20 +589,19 @@ def expense_log(request):
         except ValueError:
             pass
 
-    # --- Predefined ranges ---
     elif view_type == '3m':
         start_date = end_date - relativedelta(months=3)
 
     elif view_type == '6m':
         start_date = end_date - relativedelta(months=6)
 
-    elif view_type == 'monthly':  # last 12 months
+    elif view_type == 'monthly':  
         start_date = end_date - relativedelta(months=12)
 
     elif view_type == '2y':
         start_date = end_date - relativedelta(years=2)
 
-    # --- If any start_date was set above ---
+   
     if start_date and not (custom_start and custom_end):
         monthly_data = (
             Expense.objects.filter(user=request.user, date__range=(start_date, end_date))
@@ -633,7 +613,7 @@ def expense_log(request):
         labels = [e['period'].strftime('%Y-%m') for e in monthly_data]
         data = [float(e['total']) for e in monthly_data]
 
-    # --- Yearly ---
+
     elif view_type == 'yearly':
         yearly_data = (
             Expense.objects.filter(user=request.user)
@@ -645,7 +625,6 @@ def expense_log(request):
         labels = [e['period'].strftime('%Y') for e in yearly_data]
         data = [float(e['total']) for e in yearly_data]
 
-    # --- All time (monthly) ---
     elif view_type == 'all':
         all_data = (
             Expense.objects.filter(user=request.user)
@@ -657,7 +636,6 @@ def expense_log(request):
         labels = [e['period'].strftime('%Y-%m') for e in all_data]
         data = [float(e['total']) for e in all_data]
 
-    # --- Pagination (unchanged) ---
     paginator = Paginator(expenses, 20)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
@@ -671,7 +649,6 @@ def expense_log(request):
         start_page = max(end_page - window_size + 1, 1)
     page_range = range(start_page, end_page + 1)
 
-    # --- Forecast (unchanged) ---
     forecast = get_user_expense_forecast(request.user)
 
     context = {
@@ -684,11 +661,10 @@ def expense_log(request):
         'view_type': view_type,
         'custom_start': custom_start or '',
         'custom_end': custom_end or '',
-        #pass raw values for easy checks in template
+
         'spent_so_far': forecast['spent_so_far'],
         'current_month_expected': forecast['this_month_expected'],
         'next_month_expected': forecast['next_month_expected'],
-        # Flags for template
         'spent_so_far_numeric': isinstance(forecast['spent_so_far'], (int, float, Decimal)),
         'current_month_expected_numeric': isinstance(forecast['this_month_expected'], (int, float, Decimal)),
         'next_month_expected_numeric': isinstance(forecast['next_month_expected'], (int, float, Decimal)),
@@ -703,8 +679,7 @@ def delete_selected_expenses(request):
         id_list = [int(i) for i in ids.split(",") if i.isdigit()]
         Expense.objects.filter(id__in=id_list, user=request.user).delete()
     messages.success(request, "Selected expenses deleted successfully!")
-    return redirect("expense_log")  # 👈 make sure this is the correct name of your expense list page
-
+    return redirect("expense_log")  
 @login_required
 def bulk_delete_expense(request):
     if request.method == "POST":
@@ -722,7 +697,6 @@ def income_history(request):
     start_date = None
     end_date = timezone.now().date()
 
-    # --- Handle custom range ---
     custom_start = request.GET.get('start')
     custom_end = request.GET.get('end')
     
@@ -742,7 +716,6 @@ def income_history(request):
         except ValueError:
             pass
 
-    # --- Standard filters ---
     elif view_type == '3m':
         start_date = end_date - relativedelta(months=3)
     elif view_type == '6m':
@@ -752,7 +725,6 @@ def income_history(request):
     elif view_type == 'monthly':
         start_date = end_date - relativedelta(months=12)
 
-    # --- If we have a start_date, compute data ---
     if start_date and not (custom_start and custom_end):
         monthly_data = (
             Income.objects.filter(user=request.user, date__range=(start_date, end_date))
@@ -764,7 +736,6 @@ def income_history(request):
         labels = [entry['period'].strftime('%Y-%m') for entry in monthly_data]
         data = [float(entry['total']) for entry in monthly_data]
 
-    # --- yearly and all time remain same ---
     elif view_type == 'yearly':
         yearly_data = (
             Income.objects.filter(user=request.user)
@@ -787,7 +758,6 @@ def income_history(request):
         labels = [entry['period'].strftime('%Y-%m') for entry in all_data]
         data = [float(entry['total']) for entry in all_data]
 
-    # Pagination logic unchanged
     paginator = Paginator(incomes, 20)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
@@ -833,7 +803,6 @@ def bulk_delete_income(request):
 def process_recurring_transactions(user):
     today = timezone.now().date()
 
-    # Current totals
     total_income = Income.objects.filter(user=user).aggregate(total=Sum('amount'))['total'] or Decimal('0')
     total_expense = Expense.objects.filter(user=user).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
@@ -841,16 +810,13 @@ def process_recurring_transactions(user):
     while changed:
         changed = False
 
-        # ---- Process Recurring Incomes ----
         incomes = RecurringIncome.objects.filter(user=user, next_due_date__lte=today, status="active")
         for rec in incomes:
-            # Stop if beyond end date
             if rec.end_date and rec.next_due_date > rec.end_date:
                 rec.status = "inactive"
                 rec.save()
                 continue
 
-            # ✅ Prevent duplicates
             if not Income.objects.filter(
                 user=user,
                 source=rec.source,
@@ -865,7 +831,7 @@ def process_recurring_transactions(user):
                     date=rec.next_due_date,
                     category=rec.category,
                     user=user,
-                    recurring=rec   # Link transaction to recurring record
+                    recurring=rec   
                 )
                 total_income += Decimal(rec.amount)
 
@@ -877,7 +843,6 @@ def process_recurring_transactions(user):
             rec.save()
             changed = True
 
-        # ---- Process Recurring Expenses ----
         expenses = RecurringExpense.objects.filter(user=user, next_due_date__lte=today).exclude(status="inactive")
         for rec in expenses:
             if rec.end_date and rec.next_due_date > rec.end_date:
@@ -886,7 +851,7 @@ def process_recurring_transactions(user):
                 continue
 
             if (total_expense + Decimal(rec.amount)) <= total_income:
-                # ✅ Prevent duplicates
+
                 if not Expense.objects.filter(
                     user=user,
                     name=rec.name,
@@ -901,7 +866,7 @@ def process_recurring_transactions(user):
                         date=rec.next_due_date,
                         category=rec.category,
                         user=user,
-                        recurring=rec  # Link transaction to recurring record
+                        recurring=rec 
                     )
                     total_expense += Decimal(rec.amount)
 
@@ -918,7 +883,6 @@ def process_recurring_transactions(user):
                 rec.status = "pending"
                 rec.save()
 
-        # ---- Retry pending expenses ----
         pendings = RecurringExpense.objects.filter(user=user, status="pending")
         for rec in pendings:
             if rec.end_date and rec.next_due_date > rec.end_date:
@@ -927,7 +891,7 @@ def process_recurring_transactions(user):
                 continue
 
             if (total_expense + Decimal(rec.amount)) <= total_income:
-                # ✅ Prevent duplicates
+
                 if not Expense.objects.filter(
                     user=user,
                     name=rec.name,
@@ -980,7 +944,7 @@ def recurring_expense(request):
         if form.is_valid():
             rec_exp = form.save(commit=False)
             rec_exp.user = request.user
-            rec_exp.next_due_date = rec_exp.start_date  # ensure proper Date object
+            rec_exp.next_due_date = rec_exp.start_date  
             rec_exp.save()
             messages.success(request, "Recurring expense added successfully!")
             check_budget_warnings(request, rec_exp)
@@ -1015,7 +979,7 @@ def recurring_income(request):
         if form.is_valid():
             rec_inc = form.save(commit=False)
             rec_inc.user = request.user
-            rec_inc.next_due_date = rec_inc.start_date  # ensure proper Date object
+            rec_inc.next_due_date = rec_inc.start_date 
             rec_inc.save()
             messages.success(request, "Recurring income added successfully!")
             return redirect('recurring_income')
@@ -1051,19 +1015,16 @@ def edit_recurring_expense(request, id):
         if form.is_valid():
             rec = form.save(commit=False)
 
-            changed_fields = form.changed_data
-            # Core fields that should trigger regeneration
+            changed_fields = form.changed_dataation
             reset_fields = {"start_date", "end_date", "amount", "category", "frequency", "name"}
 
             if reset_fields.intersection(changed_fields):
-                # Delete all previously generated transactions linked to this recurring record
+    
                 Expense.objects.filter(user=request.user, recurring=expense).delete()
 
-                # Reset next_due_date and reactivate
                 rec.next_due_date = rec.start_date
                 rec.status = "active"
 
-            # Handle new end_date logic
             if rec.end_date and rec.next_due_date > rec.end_date:
                 rec.status = "inactive"
             else:
@@ -1100,19 +1061,14 @@ def edit_recurring_income(request, id):
     old_amount = income.amount or Decimal("0")
     new_amount = rec.amount or Decimal("0")
 
-    # --- Compute totals excluding this recurring income ---
     total_income_excl = Income.objects.filter(user=request.user).exclude(recurring=income).aggregate(total=Sum("amount"))["total"] or Decimal("0")
     total_expense = Expense.objects.filter(user=request.user).aggregate(total=Sum("amount"))["total"] or Decimal("0")
 
-    # --- Get how many incomes were previously generated by this recurring income ---
     generated_qs = Income.objects.filter(user=request.user, recurring=income)
     generated_count = generated_qs.count()
 
-    # --- Predict new total income after edit ---
     hypothetical_total_income = total_income_excl + (generated_count * new_amount)
 
-    # --- Validation Rule ---
-    # ❌ Block only if rule breaks: total_income < total_expense
     if hypothetical_total_income < total_expense:
         messages.error(
             request,
@@ -1121,7 +1077,6 @@ def edit_recurring_income(request, id):
         )
         return redirect("recurring_income")
 
-    # --- Regenerate transactions if key fields changed ---
     changed_fields = form.changed_data
     reset_fields = {"start_date", "end_date", "amount", "category", "frequency", "source"}
 
@@ -1130,7 +1085,6 @@ def edit_recurring_income(request, id):
         rec.next_due_date = rec.start_date
         rec.status = "active"
 
-    # --- Handle end_date logic ---
     if rec.end_date and rec.next_due_date > rec.end_date:
         rec.status = "inactive"
     else:
@@ -1162,7 +1116,6 @@ def dashboard(request):
 
     process_recurring_transactions(request.user)
 
-    # --- Filters ---
     view_type = request.GET.get("view", "monthly")
     custom_start = request.GET.get("start")
     custom_end = request.GET.get("end")
@@ -1193,11 +1146,9 @@ def dashboard(request):
     else:
         start_date = end_date - relativedelta(months=12)
 
-    # --- QS for chart data ---
     income_qs = Income.objects.filter(user=request.user, date__range=(start_date, end_date))
     expense_qs = Expense.objects.filter(user=request.user, date__range=(start_date, end_date))
 
-    # --- Dashboard totals ---
     income_total = Decimal(Income.objects.filter(user=request.user).aggregate(total=Sum('amount'))['total'] or 0)
     expense_total = Decimal(Expense.objects.filter(user=request.user).aggregate(total=Sum('amount'))['total'] or 0)
 
@@ -1205,7 +1156,6 @@ def dashboard(request):
     income_total = income_total.quantize(Decimal("0.01"))
     expense_total = expense_total.quantize(Decimal("0.01"))
 
-    # --- Last transaction ---
     last_income = Income.objects.filter(user=request.user).order_by('-date').first()
     last_expense = Expense.objects.filter(user=request.user).order_by('-date').first()
 
@@ -1216,7 +1166,6 @@ def dashboard(request):
     else:
         last_transaction = last_expense
 
-    # --- Recurring Expenses ---
     today = timezone.now().date()
     due_expenses = RecurringExpense.objects.filter(
         user=request.user,
@@ -1224,9 +1173,7 @@ def dashboard(request):
         status__in=["active", "pending"]
     ).order_by("next_due_date")
 
-    # -------------------------------------------------------
-    # 1. MONTHLY TRENDS (Month + Year)
-    # -------------------------------------------------------
+
     monthly_income = (
         income_qs
         .annotate(year=ExtractYear('date'), month=ExtractMonth('date'))
@@ -1243,7 +1190,6 @@ def dashboard(request):
         .order_by('year', 'month')
     )
 
-    # Build dict with keys like "2024-01"
     income_dict = {
         f"{item['year']}-{item['month']:02d}": float(item['total'])
         for item in monthly_income
@@ -1253,7 +1199,6 @@ def dashboard(request):
         for item in monthly_expense
     }
 
-    # Full monthly label list across range
     current = start_date.replace(day=1)
     monthly_labels = []
 
@@ -1264,9 +1209,7 @@ def dashboard(request):
     income_data = [income_dict.get(lbl, 0) for lbl in monthly_labels]
     expense_data = [expense_dict.get(lbl, 0) for lbl in monthly_labels]
 
-    # -------------------------------------------------------
-    # 2. WEEKLY TRENDS (Week + Year)
-    # -------------------------------------------------------
+
     weekly_income = (
         income_qs
         .annotate(year=ExtractYear('date'), week=ExtractWeek('date'))
@@ -1292,7 +1235,7 @@ def dashboard(request):
         for item in weekly_expense
     }
 
-    # Build weekly ranges
+
     def generate_week_labels(start_date, end_date):
         labels = []
         weeks = []
@@ -1321,9 +1264,6 @@ def dashboard(request):
     weekly_income_data = [week_income_dict.get(k, 0) for k in week_keys]
     weekly_expense_data = [week_expense_dict.get(k, 0) for k in week_keys]
 
-    # -------------------------------------------------------
-    # 3. CATEGORY-WISE TOTALS
-    # -------------------------------------------------------
     category_expenses = (
         expense_qs.values('category')
         .annotate(total=Sum('amount'))
@@ -1333,9 +1273,7 @@ def dashboard(request):
     category_labels = [c['category'] for c in category_expenses]
     category_values = [float(c['total']) for c in category_expenses]
 
-    # -------------------------------------------------------
-    # CONTEXT
-    # -------------------------------------------------------
+ 
     context = {
         "total_income": income_total,
         "total_expense": expense_total,

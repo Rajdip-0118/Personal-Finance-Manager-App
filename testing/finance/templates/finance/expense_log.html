@@ -23,10 +23,10 @@
     {% endif %}
 <main style="flex: 1;">
     <h1 class="page-title">💳 Expense Log</h1>
-    <!-- Forecast Summary -->
+
     <div style="display:flex; gap:20px; margin:20px 0; flex-wrap:wrap;">
         
-        <!-- Spent So Far -->
+
         <div class="prediction-card glass"
             style="--card-gradient: linear-gradient(135deg, rgba(20,71,66,0.5), rgba(0,144,12,0.5));">
             <h3>💸 Spent So Far (This Month)</h3>
@@ -37,7 +37,7 @@
             {% endif %}
         </div>
 
-        <!-- Expected Spend This Month -->
+
         <div class="prediction-card glass"
             style="--card-gradient: linear-gradient(135deg, rgba(247,151,30,0.45), rgba(225,184,2,0.45));">
             <h3>📈 Expected Spend (This Month)</h3>
@@ -48,7 +48,7 @@
             {% endif %}
         </div>
 
-        <!-- Expected Spend Next Month -->
+     
         <div class="prediction-card glass"
             style="--card-gradient: linear-gradient(135deg, rgba(106,17,203,0.45), rgba(37,117,252,0.45));">
             <h3>🔮 Expected Spend (Next Month)</h3>
@@ -59,7 +59,7 @@
             {% endif %}
         </div>
     </div>
-    <!-- Manage Expenses Card -->
+   
     <div class="card" style="padding:15px; border-radius:10px; margin:20px 0; display:flex; align-items:center; justify-content:space-between;">
         <h2 style="margin:0;">⚙️ Manage Expenses</h2>
         <div style="display:flex; gap:10px; align-items:center;">
@@ -80,7 +80,7 @@
 
     <table>
         <tr>
-                <th><input type="checkbox" id="select-all"></th> <!-- Checkbox column -->
+                <th><input type="checkbox" id="select-all"></th>
                 <th>Date</th>
                 <th>Purpose</th>
                 <th>Amount</th>
@@ -89,7 +89,7 @@
                     <span id="categoryIcon" style="cursor:pointer; display:inline-block; transition:transform 0.2s;" onclick="toggleCategoryDropdown()">⏷</span>
                 </th>
 
-                <!-- Move dropdown outside table so it doesn't get cut -->
+              
                 <ul id="categoryDropdown" style="display:none; position:absolute; background:var(--section-bg); list-style:none; margin:0; padding:5px 0; border-radius:6px; z-index:999; box-shadow:0 4px 8px rgba(0,0,0,0.4); max-height:200px; overflow-y:auto; min-width:150px; color:var(--text-color);">
                     <li style="padding:5px 12px; cursor:pointer;" onclick="filterByCategory('')">All</li>
                     {% for category in categories %}
@@ -117,7 +117,7 @@
             </td>
         </tr>
 
-        <!-- Hidden inline edit form -->
+
         <tr id="edit-form-{{ expense.id }}" style="display:none; background:var(--section-bg);">
             <td colspan="6">
                 <form action="{% url 'edit_expense' expense.id %}" method="post" style="display:flex; gap:10px;">
@@ -140,18 +140,18 @@
         {% endfor %}
     </table>
 
-    <!-- Pagination -->
+
     <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:nowrap; gap:15px;">
 
-        <!-- Left: Page info -->
+     
         <div style="white-space:nowrap;font-weight:bold;color:var(--text-color);">
             <h2>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</h2>
         </div>
 
-        <!-- Right: Pagination controls -->
+ 
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
 
-            <!-- Previous -->
+
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}">
                     <button type="button" style="padding:6px 12px;">« Previous</button>
@@ -160,7 +160,7 @@
                 <button type="button" style="padding:6px 12px;" disabled>« Previous</button>
             {% endif %}
 
-            <!-- Sliding window of 5 pages -->
+    
             {% for num in page_range %}
                 {% if page_obj.number == num %}
                     <button type="button" class="edit-button" style="padding:6px 12px; font-weight:bold; height:40px;" disabled>{{ num }}</button>
@@ -171,7 +171,7 @@
                 {% endif %}
             {% endfor %}
 
-            <!-- Next -->
+ 
             {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}">
                     <button type="button" style="padding:6px 12px;">Next »</button>
@@ -184,11 +184,11 @@
 
     <div class="chart-placeholder" style="position: relative;">
 
-        <!-- Filter Form (Top Right) -->
+    
         <form method="get" id="viewForm" 
             style="position:absolute; top:6px; right:6px; display:flex !important; flex-direction:row !important; align-items:center; gap:10px; width:auto !important; padding:0 !important; background: transparent!important; border:none;">
 
-            <!-- View Type Selector -->
+    
             <select name="view" id="viewSelect"
                 onchange="handleViewChange()"
                 style="padding:6px 10px; color:var(--text-color); width:auto; border:1px solid #ccc; border-radius:4px;">
@@ -201,13 +201,13 @@
                 <option value="custom" {% if custom_start and custom_end %}selected{% endif %}>Custom Range</option>
             </select>
 
-            <!-- Reset Button (moved beside selector) -->
+
             <button type="button" onclick="resetChartFilters()" 
                 class="edit-button" style="padding:6px 10px; cursor:pointer; display:inline-flex; width:auto;">
                 Reset
             </button>
 
-            <!-- Custom Date Range (hidden unless "custom" is selected) -->
+
             <div id="customDateFields" 
                 style="display: none; align-items: center; gap: 6px; white-space:nowrap;">
                 <label style="color:var(--text-color); font-size:0.9em;">From:</label>
@@ -218,7 +218,7 @@
             </div>
         </form>
 
-        <!-- Chart Canvas -->
+
         <canvas id="expenseLogChart"></canvas>
     </div>
 
@@ -232,12 +232,12 @@ function toggleCategoryDropdown() {
     const dropdown = document.getElementById("categoryDropdown");
     const icon = document.getElementById("categoryIcon");
 
-    // Calculate position below the icon
+
     const rect = icon.getBoundingClientRect();
     dropdown.style.top = (rect.bottom + window.scrollY) + "px";
     dropdown.style.left = (rect.left + window.scrollX) + "px";
 
-    // Toggle display
+
     if (dropdown.style.display === "none" || dropdown.style.display === "") {
         dropdown.style.display = "block";
         icon.style.transform = "rotate(180deg)";
@@ -247,7 +247,7 @@ function toggleCategoryDropdown() {
     }
 }
 
-// Close dropdown if clicked outside
+
 document.addEventListener("click", function(e) {
     const dropdown = document.getElementById("categoryDropdown");
     const icon = document.getElementById("categoryIcon");
@@ -264,13 +264,13 @@ function filterByCategory(category) {
         row.style.display = (!category || categoryCell.textContent.trim() === category) ? "" : "none";
     });
 
-    // hide dropdown & reset arrow
+   
     const dropdown = document.getElementById("categoryDropdown");
     const icon = document.getElementById("categoryIcon");
     dropdown.style.display = "none";
     icon.style.transform = "rotate(0deg)";
 }
-    //button inputs
+    
     function toggleFilter(id) {
     let el = document.getElementById(id);
     el.style.display = (el.style.display === "none") ? "block" : "none";
@@ -280,12 +280,12 @@ function filterByCategory(category) {
         formRow.style.display = (formRow.style.display === "none") ? "table-row" : "none";
     }
 
-    // Select/Deselect all checkboxes
+
     document.getElementById("select-all").addEventListener("change", function() {
         document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
     });
 
-    // Collect selected IDs before form submit
+
     document.getElementById("delete-selected-form").addEventListener("submit", function(e) {
         const selected = Array.from(document.querySelectorAll(".row-checkbox:checked")).map(cb => cb.value);
         document.getElementById("selected-ids").value = selected.join(",");
@@ -308,7 +308,7 @@ function filterByCategory(category) {
         const ctx = document.getElementById('expenseLogChart').getContext("2d");
         const colors = getExpenseLogThemeColors();
 
-        // Format labels like "Jan, 2025"
+
         const formattedLabels = {{ labels|safe }}.map(label => {
             const parts = label.split("-");
             if (parts.length === 2) {
@@ -385,24 +385,24 @@ function filterByCategory(category) {
         expenseLogChart.destroy();
         expenseLogChart = createExpenseLogChart();
     });
-    //select form chart
+ 
 
     function handleViewChange() {
         const select = document.getElementById('viewSelect');
         const customFields = document.getElementById('customDateFields');
 
         if (select.value === 'custom') {
-            // ✅ Show date fields but DO NOT auto-submit
+          
             customFields.style.display = 'flex';
         } else {
-            // ✅ Only auto-submit for non-custom views
+      
             customFields.style.display = 'none';
             document.getElementById('viewForm').submit();
         }
     }
 
 
-    // If custom range was active on load, show fields
+   
     document.addEventListener("DOMContentLoaded", () => {
         const select = document.getElementById('viewSelect');
         if (select.value === 'custom') {
@@ -410,10 +410,10 @@ function filterByCategory(category) {
         }
     });
 
-    // Reset button logic — revert to default "Last 1 Year" (monthly)
+  
     function resetChartFilters() {
         const select = document.getElementById('viewSelect');
-        select.value = 'monthly'; // default view
+        select.value = 'monthly'; 
         document.getElementById('startDate').value = '';
         document.getElementById('endDate').value = '';
         document.getElementById('viewForm').submit();

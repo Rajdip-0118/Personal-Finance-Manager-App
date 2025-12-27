@@ -10,9 +10,7 @@ from .utils import surplus_rollover
 def recalc_goal_allocations(user):
     surplus_rollover(user)
 
-# -------------------------
-# Income Signals
-# -------------------------
+
 @receiver(post_save, sender=Income)
 def income_saved(sender, instance, created, **kwargs):
     recalc_goal_allocations(instance.user)
@@ -23,9 +21,6 @@ def income_deleted(sender, instance, **kwargs):
     recalc_goal_allocations(instance.user)
 
 
-# -------------------------
-# Expense Signals
-# -------------------------
 @receiver(post_save, sender=Expense)
 def expense_saved(sender, instance, created, **kwargs):
     recalc_goal_allocations(instance.user)

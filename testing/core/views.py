@@ -19,13 +19,11 @@ def update_preferences(request):
     if request.method == 'POST' and request.user.is_authenticated:
         prefs, _ = UserPreference.objects.get_or_create(user=request.user)
 
-        # Get submitted values
         username = request.POST.get('username')
         email = request.POST.get('email')
         currency = request.POST.get('currency')
         theme = request.POST.get('theme')
 
-        # ---- Update username ----
         if username and username != request.user.username:
             if User.objects.filter(username=username).exclude(pk=request.user.pk).exists():
                 messages.error(request, "⚠ Username already taken!")
@@ -34,7 +32,6 @@ def update_preferences(request):
                 request.user.save()
                 messages.success(request, "👤 Username updated successfully!")
 
-        # ---- Update email ----
         if email and email != request.user.email:
             if User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
                 messages.error(request, "⚠ Email already in use!")
@@ -43,13 +40,11 @@ def update_preferences(request):
                 request.user.save()
                 messages.success(request, "📩 Email updated successfully!")
 
-        # ---- Update currency ----
         if currency and currency != prefs.currency:
             prefs.currency = currency
             prefs.save()
             messages.success(request, "💱 Currency updated successfully!")
 
-        # ---- Update theme ----
         if theme and theme != prefs.theme:
             prefs.theme = theme
             prefs.save()
@@ -64,7 +59,6 @@ def settings_view(request):
     prefs, _ = UserPreference.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        # ---- Handle Password Change ----
         if "current_password" in request.POST:
             current = request.POST.get("current_password")
             new = request.POST.get("new_password")

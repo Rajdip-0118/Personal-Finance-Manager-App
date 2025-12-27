@@ -7,27 +7,24 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import classification_report, accuracy_score, f1_score
 from sentence_transformers import SentenceTransformer
 
-# ------------------ Paths ------------------ #
+
 BASE_DIR = os.path.dirname(__file__)
 CSV_PATH = os.path.join(BASE_DIR, "synthetic_income_dataset_v2.csv")
 MODEL_PATH = os.path.join(BASE_DIR, "income_classifier_model.pkl")
 
-# ------------------ Main Categories ------------------ #
 INCOME_CATEGORIES = [
     "Salary", "Business", "Freelance", "Rental Income", "Dividends",
     "Interest Income", "Gifts & Donations", "Refunds",
     "Retirement Income", "Bonus & Incentives", "Other Income"
 ]
 MISC_CATEGORY = "Other Income"
-
-# ------------------ Preprocessing ------------------ #
+#
 def clean_text(text: str):
     return str(text).lower().strip()
 
 def preprocess_texts(texts):
     return [clean_text(t) for t in texts]
 
-# ------------------ Keyword mapping ------------------ #
 KEYWORD_CATEGORY_MAP = {
     # Salary / Job-related
     "salary": "Salary",
@@ -97,7 +94,6 @@ def keyword_category_mapping(text: str):
             return category
     return None
 
-# ------------------ Embedding ------------------ #
 def encode_texts(embedder, texts, batch_size=64):
     embeddings = []
     for i in range(0, len(texts), batch_size):
@@ -106,7 +102,6 @@ def encode_texts(embedder, texts, batch_size=64):
         embeddings.append(batch_emb)
     return np.concatenate(embeddings, axis=0)
 
-# ------------------ Model caching ------------------ #
 _model_bundle = None
 
 def load_classifier():
@@ -118,7 +113,6 @@ def load_classifier():
             _model_bundle = train_classifier(CSV_PATH)
     return _model_bundle
 
-# ------------------ Training ------------------ #
 def train_classifier(csv_path=CSV_PATH, save_model=True):
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"CSV not found: {csv_path}")
@@ -158,7 +152,6 @@ def train_classifier(csv_path=CSV_PATH, save_model=True):
     _model_bundle = {"embedder": embedder, "classifier": clf}
     return _model_bundle
 
-# ------------------ Prediction ------------------ #
 def predict_category(texts, confidence_threshold=0.2):
     model_bundle = load_classifier()
     embedder = model_bundle["embedder"]
@@ -168,19 +161,17 @@ def predict_category(texts, confidence_threshold=0.2):
     preds = []
 
     for t in clean_texts_list:
-        # 1️⃣ Keyword mapping first (for obvious matches)
+
         mapped = keyword_category_mapping(t)
         if mapped:
             preds.append(mapped)
             continue
 
-        # 2️⃣ Model prediction with confidence threshold
         emb = encode_texts(embedder, [t])
         probs = clf.predict_proba(emb)[0]
         max_prob = np.max(probs)
         pred = clf.classes_[np.argmax(probs)]
 
-        # If model isn't confident, fallback to "Other Income"
         if max_prob < confidence_threshold:
             preds.append(MISC_CATEGORY)
         else:

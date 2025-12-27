@@ -9,7 +9,7 @@ from django.db.models import F
 from savings.models import SavingsGoal
 
 
-# Constants
+
 MAX_DISPLAY_YEARS = 30
 DEFAULT_LOOKBACK_MONTHS = 12
 MIN_REGRESSION_MONTHS = 3
@@ -70,7 +70,7 @@ def predict_goal_probability(user, goal: SavingsGoal):
     """
     today = date.today()
 
-    # Remaining amount check
+ 
     remaining = float(goal.remaining_amount())
     if remaining <= 0:
         return {"probability": 100.0, "suggested_deadline": "--"}
@@ -79,7 +79,7 @@ def predict_goal_probability(user, goal: SavingsGoal):
     if slope <= 0:
         return {"probability": 0.0, "suggested_deadline": "--"}
 
-    # Get all other active goals of the user
+
     higher_goals = SavingsGoal.objects.filter(
         user=user,
         current_amount__lt=F("target_amount")
@@ -92,7 +92,6 @@ def predict_goal_probability(user, goal: SavingsGoal):
 
     priority_rank = {"High": 0, "Medium": 1, "Low": 2}
 
-    # Sort goals by deadline, priority, creation date, and ID
     goals_list = sorted(
         higher_goals,
         key=lambda g: (
@@ -103,7 +102,6 @@ def predict_goal_probability(user, goal: SavingsGoal):
         )
     )
 
-    # Filter only goals ahead of the current goal
     priors = [
         h for h in goals_list
         if (_effective_deadline(h),
@@ -115,11 +113,9 @@ def predict_goal_probability(user, goal: SavingsGoal):
                      goal.id)
     ]
 
-    # Calculate months until the goal's deadline
     months_to_deadline = _months_between(today, date(goal.deadline.year, goal.deadline.month, 1)) \
         if goal.deadline else 999
 
-    # Account for prior goals
     months_consumed = 0
     for prior in priors:
         prior_remaining = float(prior.target_amount - prior.current_amount)
@@ -130,12 +126,10 @@ def predict_goal_probability(user, goal: SavingsGoal):
         if months_consumed >= months_to_deadline:
             return {"probability": 0.0, "suggested_deadline": "--"}
 
-    # Calculate probability for the current goal
     months_available = max(months_to_deadline - months_consumed, 0)
     projected_total = float(goal.current_amount) + slope * months_available
     prob = round(min(projected_total / float(goal.target_amount), 1.0) * 100, 2)
 
-    # Suggested deadline calculation
     sd = "--"
     if prob < 100:
         months_to_finish = math.ceil((remaining / slope) * LEEWAY_FACTOR) + months_consumed

@@ -216,7 +216,6 @@
 </footer>
 
 <script>
-    // Edit Selected Button
     const editBtn = document.getElementById("edit-selected-btn");
     const editForm = document.getElementById("edit-selected-form");
     const editSelectedInput = document.getElementById("edit-selected-id");
@@ -229,16 +228,13 @@
         }
 
         const budgetId = selected[0].getAttribute("data-budget-id");
-        // Navigate to edit page
         window.location.href = `/budget/edit/${budgetId}/`;
     });
 
-    // Select/Deselect all checkboxes
     document.getElementById("select-all").addEventListener("change", function() {
         document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
     });
 
-    // Populate selected IDs before submitting "Delete Selected" form
     const deleteSelectedForm = document.getElementById("delete-selected-form");
     deleteSelectedForm.addEventListener("submit", function(e) {
         const selectedIds = Array.from(document.querySelectorAll(".row-checkbox:checked"))

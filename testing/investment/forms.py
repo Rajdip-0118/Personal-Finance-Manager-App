@@ -5,7 +5,7 @@ class InvestmentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Dynamically load investment type and frequency choices
+
         model = self._meta.model
         if 'investment_type' in self.fields:
             self.fields['investment_type'].choices = model.INVESTMENT_TYPES
@@ -46,7 +46,7 @@ class InvestmentForm(forms.ModelForm):
             'expected_return',
             'start_date',
             'end_date',
-            'frequency',  # ✅ added
+            'frequency',
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Enter Name of Investment',}),

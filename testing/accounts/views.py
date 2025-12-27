@@ -1,10 +1,10 @@
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login , logout, authenticate  
 from .forms import CreateUserForm
 
 
-# Create your views here.
+
 
 
 def homepage(request):

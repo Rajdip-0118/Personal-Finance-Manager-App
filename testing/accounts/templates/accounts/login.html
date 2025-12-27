@@ -153,12 +153,12 @@
             const password = document.getElementById('password').value.trim();
             const alertBox = document.getElementById('alert-message');
             if (!username || !password) {
-                e.preventDefault();  // block only if inputs are empty
+                e.preventDefault(); 
                 alertBox.textContent = 'Please enter both username and password.';
                 alertBox.style.display = 'block';
             } else {
                 alertBox.style.display = 'none';
-                // Let the form submit
+               
             }
         });
         </script>

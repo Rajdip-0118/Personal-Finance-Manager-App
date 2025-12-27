@@ -1,9 +1,6 @@
 from django.conf import settings
-from django.utils import timezone
 from django.db import models
-from investment.models import Investment
 
-# Create your models here.
 class Expense(models.Model):
     CATEGORY_CHOICES = [
         ('Housing & Utilities', 'Housing & Utilities'),
@@ -18,7 +15,7 @@ class Expense(models.Model):
         ('Miscellaneous', 'Miscellaneous'),
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    investment = models.ForeignKey('investment.Investment', on_delete=models.CASCADE, null=True, blank=True, related_name='expenses')  # ← new
+    investment = models.ForeignKey('investment.Investment', on_delete=models.CASCADE, null=True, blank=True, related_name='expenses')  
     name = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=21, decimal_places=2)
     date = models.DateField()
@@ -43,7 +40,7 @@ class Income(models.Model):
         ('Other Income', 'Other Income'),
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    investment = models.ForeignKey('investment.Investment', on_delete=models.CASCADE, null=True, blank=True, related_name='incomes')  # ← new
+    investment = models.ForeignKey('investment.Investment', on_delete=models.CASCADE, null=True, blank=True, related_name='incomes') 
     source = models.CharField(max_length=100)  
     amount = models.DecimalField(max_digits=21, decimal_places=2)
     date = models.DateField()

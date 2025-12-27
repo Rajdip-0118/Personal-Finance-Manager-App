@@ -66,13 +66,12 @@
     </main>
 </div>
 
-<!-- Tooltip element -->
 <div id="date-tooltip">Past dates cannot be selected</div>
 
 <footer>{% include 'core/footer.html' %}</footer>
 
 <script>
-    // Auto-hide popup messages
+
     setTimeout(() => {
         document.querySelectorAll(".popup-message").forEach(msg => {
             msg.classList.add("fade-out");
@@ -80,13 +79,13 @@
         });
     }, 3000);
 
-    // Tooltip for date picker
+
     document.addEventListener("DOMContentLoaded", function() {
         const dateInput = document.querySelector("input[name='deadline']");
         const tooltip = document.getElementById("date-tooltip");
 
         if (dateInput && tooltip) {
-            // Only show tooltip on hover over the input (calendar icon)
+  
             dateInput.addEventListener("mouseover", function(e) {
                 tooltip.style.display = "block";
                 tooltip.style.left = e.pageX + 10 + "px";

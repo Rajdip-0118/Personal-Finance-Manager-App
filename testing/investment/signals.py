@@ -5,12 +5,9 @@ from .models import Investment
 from finance.models import Expense, Income
 from decimal import Decimal, ROUND_HALF_UP, getcontext
 
-# make sure enough precision for pow
+
 getcontext().prec = 28
 
-# -------------------------------------------------
-# Helper: Choose income category based on investment type
-# -------------------------------------------------
 def choose_income_category(inv_type):
     t = (inv_type or "").lower()
     if t in ["fd", "fixed deposit", "rd", "recurring deposit", "bond"]:
@@ -24,9 +21,6 @@ def choose_income_category(inv_type):
     return "Other Income"
 
 
-# -------------------------------------------------
-# Helper: Compact compound value calculator (supports frequency)
-# -------------------------------------------------
 def _to_decimal(value):
     if value is None:
         return Decimal('0')
@@ -80,32 +74,25 @@ def _calculate_estimated_value(amount, expected_return, start_date, end_date, in
     final_frequency = frequency or auto_freq
     comp_per_year = freq_map.get(final_frequency, Decimal('1'))
 
-    # rate per period (Decimal)
+
     rate_per_period = (expected_return / Decimal('100')) / comp_per_year
     periods = comp_per_year * years
 
-    # Special case: Recurring Deposit (approximate future value of monthly contributions)
     if 'rd' in investment_type_lower or 'recurring' in investment_type_lower:
-        # Treat 'amount' as monthly contribution -> approximate formula
-        # months = int(years * 12)
-        # monthly_rate = (expected_return / 100) / 12
+
         months = int((years * Decimal('12')).to_integral_value(rounding=ROUND_HALF_UP))
         if months <= 0 or rate_per_period == 0:
             return amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         monthly_rate = (expected_return / Decimal('100')) / Decimal('12')
-        # Future value of an annuity (contributions at period end)
+   
         value = amount * (((Decimal('1') + monthly_rate) ** months - Decimal('1')) / monthly_rate)
         return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    # Default compounding (including FD, bond, stock etc.)
-    # FD/bond/others -> compound per period
     value = amount * ((Decimal('1') + rate_per_period) ** (periods))
     return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 
-# -------------------------------------------------
-# Track old name before saving (for rename detection)
-# -------------------------------------------------
+
 @receiver(pre_save, sender=Investment)
 def track_old_name(sender, instance, **kwargs):
     if instance.pk:
@@ -118,20 +105,17 @@ def track_old_name(sender, instance, **kwargs):
         instance._old_name = None
 
 
-# -------------------------------------------------
-# Sync Expense and Income after create or edit
-# -------------------------------------------------
 @receiver(post_save, sender=Investment)
 def sync_investment_records(sender, instance, created, **kwargs):
     old_name = getattr(instance, "_old_name", None)
     name_changed = old_name and old_name != instance.name
 
-    # -------- EXPENSE handling --------
+
     expense_name = f"Investment in {instance.name}"
 
     expense, _ = Expense.objects.get_or_create(
         user=instance.user,
-        investment=instance,  # unique link
+        investment=instance,  
         defaults={
             "name": expense_name,
             "amount": instance.amount,
@@ -154,15 +138,13 @@ def sync_investment_records(sender, instance, created, **kwargs):
     if updated_fields:
         expense.save(update_fields=updated_fields)
 
-    # -------- INCOME handling --------
     income_name = f"Investment Maturity - {instance.name}"
-    income = Income.objects.filter(user=instance.user, investment=instance).first()  # unique link
+    income = Income.objects.filter(user=instance.user, investment=instance).first()  
 
     if instance.status == "Completed" and instance.end_date:
         amount = _to_decimal(instance.amount)
         expected_return = _to_decimal(instance.expected_return or Decimal('0'))
 
-        # use investment_type and optional frequency if available on model
         investment_type = getattr(instance, "investment_type", None)
         frequency = getattr(instance, "frequency", None)
 
@@ -172,7 +154,7 @@ def sync_investment_records(sender, instance, created, **kwargs):
 
         if income:
             updated = False
-            # compare decimals properly
+          
             if _to_decimal(income.amount) != est_value:
                 income.amount = est_value
                 updated = True
@@ -187,7 +169,7 @@ def sync_investment_records(sender, instance, created, **kwargs):
         else:
             Income.objects.create(
                 user=instance.user,
-                investment=instance,  # unique link
+                investment=instance, 
                 source=income_name,
                 amount=est_value,
                 date=instance.end_date,
@@ -198,17 +180,8 @@ def sync_investment_records(sender, instance, created, **kwargs):
         income.delete()
 
 
-# -------------------------------------------------
-# Clean up linked Expense and Income on delete
-# -------------------------------------------------
 @receiver(post_delete, sender=Investment)
 def delete_linked_records(sender, instance, **kwargs):
     Expense.objects.filter(investment=instance).delete()
     Income.objects.filter(investment=instance).delete()
-
-
-#     if projected_expense > total_income:
-#         raise ValidationError("Total income must be greater than or equal to total expenses before saving this investment.")
-
-
 

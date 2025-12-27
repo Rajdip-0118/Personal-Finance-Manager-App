@@ -52,7 +52,6 @@ def normalize_date(date_str):
 
     date_str = str(date_str).strip()
 
-    # Excel serial number (e.g. 45234)
     if re.fullmatch(r"\d{5,6}", date_str):
         try:
             serial = int(date_str)
@@ -61,7 +60,7 @@ def normalize_date(date_str):
         except Exception:
             pass
 
-    # Clean and standardize
+   
     date_str = re.sub(r'(\d+)(st|nd|rd|th)', r'\1', date_str, flags=re.IGNORECASE)
     date_str = re.sub(r'[\.,-]', '/', date_str)
     date_str = re.sub(r'\s+', ' ', date_str)
@@ -144,7 +143,7 @@ def normalize_income_category(raw_category):
     for standard, synonyms in INCOME_CATEGORY_MAPPING.items():
         if raw_category in [s.lower() for s in synonyms]:
             return standard
-    return "Other Income"  # fallback
+    return "Other Income"  
 
 EXPENSE_CATEGORY_MAPPING = {
     "Housing & Utilities": [
@@ -193,7 +192,7 @@ def normalize_expense_category(raw_category):
     for standard, synonyms in EXPENSE_CATEGORY_MAPPING.items():
         if raw_category in [s.lower() for s in synonyms]:
             return standard
-    return "Miscellaneous"  # fallback
+    return "Miscellaneous"  
 
 
 
@@ -214,7 +213,7 @@ def detect_bank_statement(fieldnames, sample_rows):
     header_str = " ".join(fieldnames).lower()
     match_header = any(kw in header_str for kw in BANK_KEYWORDS)
 
-    # Check a few sample rows for typical bank patterns
+
     match_rows = 0
     for row in sample_rows[:5]:
         text = " ".join(str(v).lower() for v in row.values() if v)
@@ -241,7 +240,7 @@ def clean_amt(val):
     if val is None:
         return Decimal("0")
     val = str(val).strip()
-    # Handle parentheses as negatives
+
     if re.match(r"^\(.*\)$", val):
         val = "-" + val.strip("()")
     val = re.sub(r"[^\d.\-]", "", val)

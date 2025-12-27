@@ -171,14 +171,10 @@
 </footer>
 
 <script>
-    // ================================
-    // 🧮 Global total allocated percent
-    // ================================
+   
+
     const totalAllocatedPercent = {{ total_percent_of_budget|default:0 }};
 
-    // ================================
-    // ➕ Show Add Form
-    // ================================
     document.getElementById("toggleForm").addEventListener("click", () => {
         const formDiv = document.getElementById("addCategoryForm");
         const form = formDiv.querySelector("form");
@@ -186,21 +182,21 @@
         const helpText = limitInput.closest("p").querySelector("small");
         const formTitle = document.getElementById("formTitle");
 
-        // Switch title to Add mode
+   
         formTitle.textContent = "➕ Add Category";
 
-        // Show form, hide button
+
         formDiv.style.display = "block";
         document.getElementById("toggleForm").style.display = "none";
 
-        // Reset form for add
+ 
         form.reset();
         form.action = "{% url 'add_category' budget.id %}";
 
-        // Calculate remaining percent
+
         const remaining = Math.max(0, 100 - totalAllocatedPercent);
 
-        // Apply limit and help text
+
         limitInput.setAttribute("max", remaining.toFixed(2));
         if (helpText) {
             helpText.textContent = `Maximum allowed percent of budget: ${remaining.toFixed(2)}%.`;
@@ -210,9 +206,7 @@
     });
 
 
-    // ================================
-    // ❌ Cancel Add/Edit
-    // ================================
+  
     document.getElementById("cancelForm").addEventListener("click", () => {
         cancelEdit();
     });
@@ -224,13 +218,13 @@
         const helpText = limitInput.closest("p").querySelector("small");
         const formTitle = document.getElementById("formTitle");
 
-        // Reset and hide form
+
         form.reset();
         form.action = "{% url 'add_category' budget.id %}";
         formDiv.style.display = "none";
         document.getElementById("toggleForm").style.display = "inline-block";
 
-        // Reset title and limits
+        
         formTitle.textContent = "➕ Add Category";
         const remaining = Math.max(0, 100 - totalAllocatedPercent);
         limitInput.setAttribute("max", remaining.toFixed(2));
@@ -240,9 +234,7 @@
     }
 
 
-    // ================================
-    // ✏️ Open Edit Form (Fully Fixed)
-    // ================================
+    
     function openEditForm(id, categoryName, percent) {
         const formDiv = document.getElementById("addCategoryForm");
         const form = formDiv.querySelector("form");
@@ -250,47 +242,35 @@
         const helpText = limitInput.closest("p").querySelector("small");
         const formTitle = document.getElementById("formTitle");
 
-        // Show the form
+
         formDiv.style.display = "block";
         document.getElementById("toggleForm").style.display = "none";
 
-        // Set title
         formTitle.textContent = "✏️ Edit Category";
 
-        // Update form action to edit endpoint
         form.action = "{% url 'edit_category' 0 %}".replace("0", id);
 
-        // Pre-fill category and limit
         form.querySelector("#id_category").value = categoryName;
         limitInput.value = parseFloat(percent).toFixed(2);
 
-        // ✅ Properly recalculate max allowed percent
-        // Your category already has 'percent' allocated.
-        // Other categories combined = totalAllocatedPercent - percent
-        // Remaining = 100 - (totalAllocatedPercent - percent)
         const usedByOthers = Math.max(0, totalAllocatedPercent - parseFloat(percent));
         const remaining = Math.max(0, 100 - usedByOthers);
         const newMax = Math.min(100, remaining);
 
-        // Apply new max
         limitInput.setAttribute("max", newMax.toFixed(2));
 
-        // Update help text dynamically
         if (helpText) {
             helpText.textContent = `Maximum allowed percent of budget (for this edit): ${newMax.toFixed(2)}%.`;
         }
 
-        // Smooth scroll for better UX
         formDiv.scrollIntoView({ behavior: "smooth" });
     }
 
 
-    // Select/Deselect All
     document.getElementById("select-all").addEventListener("change", function() {
         document.querySelectorAll(".category-checkbox").forEach(cb => cb.checked = this.checked);
     });
 
-    // Delete Selected Form
     document.getElementById("delete-selected-form").addEventListener("submit", function(e) {
         const selectedIds = Array.from(document.querySelectorAll(".category-checkbox:checked"))
                                  .map(cb => cb.getAttribute("data-category-id")).join(",");
@@ -298,7 +278,6 @@
         document.getElementById("selected-ids").value = selectedIds;
     });
 
-    // Chart.js
     const labels = [{% for cat in category_data %}"{{ cat.obj.category }}",{% endfor %}];
     const data = [{% for cat in category_data %}{{ cat.spent }},{% endfor %}];
     const limits = [{% for cat in category_data %}{{ cat.limit }},{% endfor %}];
@@ -311,7 +290,6 @@
         {% endfor %}
     ];
 
-    // ✅ Detect theme from <body> class
     const isDark = document.body.classList.contains("dark");
 
     const textColor = isDark ? "#E0E0E0" : "#222";

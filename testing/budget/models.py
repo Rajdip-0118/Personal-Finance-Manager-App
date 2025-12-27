@@ -26,7 +26,7 @@ def _calculate_recurring_total(start_date, end_date, user):
         if not next_date:
             continue
 
-        # advance until in range
+
         while next_date < start_date:
             next_date = FREQ_RELATIVE.get(freq, lambda d: d)(next_date)
 
@@ -45,13 +45,11 @@ class Budget(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="budgets")
     name = models.CharField(max_length=100)
 
-    # store budget as percentage of available income (0.00 - 100.00)
     total_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('100.00'))
 
     start_date = models.DateField()
     end_date = models.DateField()
 
-    # is_zero_based removed per request
 
     def __str__(self):
         return f"{self.name} ({self.start_date} - {self.end_date})"
@@ -86,7 +84,6 @@ class BudgetCategory(models.Model):
     budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name="categories")
     category = models.CharField(max_length=50, choices=Expense.CATEGORY_CHOICES)
 
-    # store category as percent of the budget (0.00 - 100.00)
     percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
 
     def __str__(self):

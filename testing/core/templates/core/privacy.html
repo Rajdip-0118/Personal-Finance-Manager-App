@@ -138,7 +138,7 @@ window.addEventListener("resize", resizeCanvas);
 const symbols = ["₹", "$", "€", "£", "¥", "₩", "₽", "₺", "₦", "₱", "₫", "₴", "฿"];
 const colors = ["#00bfa6", "#1db954", "#4afcb3", "#2ecc71"];
 
-// Balanced, smooth, non-stretchy animation
+
 function makeItems() {
   const list = [];
   for (let i = 0; i < 160; i++) {
@@ -159,12 +159,12 @@ function makeItems() {
 let items = makeItems();
 
 function draw() {
-  // subtle fade effect for smooth motion
+  
   ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   for (const i of items) {
-    i.y += i.speed; // no stretch factor
+    i.y += i.speed; 
     i.x += i.drift;
 
     if (i.y > canvas.height + 30) {

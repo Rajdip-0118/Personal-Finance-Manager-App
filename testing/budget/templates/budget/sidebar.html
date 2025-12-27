@@ -7,24 +7,18 @@
 
     <a href="{% url 'budget_list' %}" class={% if request.resolver_match.url_name == 'budget_list' %}active{% endif %} data-tooltip="Budget History"><span>📜</span><span class="label">Budget History</span></a>
 
-        <!-- budget/sidebar.html -->
-    {% comment %} {% if budget and budget.id %}
-        <a href="{% url 'xero_budget_mode' budget.id %}" class="{% if request.resolver_match.url_name == 'xero_budget_mode' %}active{% endif %}" data-tooltip="Zero Based Budget">
-            <span>🟰</span><span class="label">Zero Based Budget</span>
-        </a>
-    {% endif %} {% endcomment %}
 </div>
 
 
 <script>
-        // Popup fadeout
+
     setTimeout(() => {
         document.querySelectorAll(".popup-message").forEach(msg => {
             msg.classList.add("fade-out");
             setTimeout(() => msg.remove(), 500);
         });
     }, 8000);
-    // Sidebar toggle
+  
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggleBtn');
 

@@ -20,14 +20,14 @@ class SavingsGoalForm(forms.ModelForm):
         if 'priority' in self.fields:
             self.fields['priority'].choices = SavingsGoal.PRIORITY_CHOICES
 
-        # Set default deadline to tomorrow if creating a new goal
-        if not self.instance.pk:  # New goal
+      
+        if not self.instance.pk: 
             tomorrow = timezone.localdate() + timedelta(days=1)
             self.fields['deadline'].initial = tomorrow
-            self.fields['deadline'].widget.attrs['min'] = tomorrow  # restrict past dates in date picker
+            self.fields['deadline'].widget.attrs['min'] = tomorrow 
         else:
             today = timezone.localdate()
-            # prevent selecting past dates for existing goals as well
+       
             self.fields['deadline'].widget.attrs['min'] = today
 
     def clean_deadline(self):

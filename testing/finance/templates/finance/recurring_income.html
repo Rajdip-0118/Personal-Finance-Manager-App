@@ -95,7 +95,6 @@
 <footer>{% include 'core/footer.html' %}</footer>
 
 <script>
-    //prediction of income
     document.addEventListener('DOMContentLoaded', function() {
         const nameField = document.getElementById('id_source');
         const categoryField = document.getElementById('id_category');
@@ -119,13 +118,10 @@
             }
         });
     });
-    //---------------------------------------------------------------------------
-    //hidden form
     function toggleEditForm(id) {
         let row = document.getElementById(id);
         row.style.display = (row.style.display === "none") ? "table-row" : "none";
     }
-    //chart
     function getRecIncomeThemeColors() {
         const isDark = document.body.classList.contains("dark");
         return {
@@ -157,7 +153,7 @@
                             font: { size: 14 } 
                         } 
                     },
-                    title: {                          // ← Added title
+                    title: {                      
                         display: true,
                         text: "🔁 Recurring Income Distribution by Categories",
                         color: colors.text,
@@ -171,10 +167,8 @@
         });
     }
 
-    // initialize
     let recIncomeChart = createRecIncomeChart();
 
-    // re-render on theme change
     document.addEventListener("themeChanged", () => {
         recIncomeChart.destroy();
         recIncomeChart = createRecIncomeChart();

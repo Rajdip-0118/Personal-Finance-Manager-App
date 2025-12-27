@@ -4,8 +4,8 @@
 function googleTranslateElementInit() {
   new google.translate.TranslateElement(
     {
-      pageLanguage: 'en',  // default site language
-      includedLanguages: 'en,hi,bn,ta,te,mr,gu,kn,ml,pa,or,as,ur',  // supported languages
+      pageLanguage: 'en', 
+      includedLanguages: 'en,hi,bn,ta,te,mr,gu,kn,ml,pa,or,as,ur',  
       layout: google.translate.TranslateElement.InlineLayout.SIMPLE
     },
     'google_translate_element'
@@ -16,7 +16,7 @@ function googleTranslateElementInit() {
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const userLang = "{{ user_language }}";  // from context processor
+    const userLang = "{{ user_language }}";  
     if (userLang && userLang !== "en") {
         const interval = setInterval(() => {
             const select = document.querySelector("select.goog-te-combo");
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 select.dispatchEvent(new Event("change"));
                 clearInterval(interval);
             }
-        }, 500); // retry every 0.5s until loaded
+        }, 500);
     }
 });
 </script>

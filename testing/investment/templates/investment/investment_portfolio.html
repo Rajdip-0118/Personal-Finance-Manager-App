@@ -11,7 +11,7 @@
 </head>
 
 <body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
-  <!-- Popup Messages -->
+
     <div id="popup-messages">
         {% if messages %}
             {% for message in messages %}
@@ -28,22 +28,7 @@
 <main style="flex: 1;">
     <h1 class="page-title">📊 Investment Portfolio</h1>
 
-    {% comment %} <!-- ✅ Summary Cards -->
-    <div class="summary-container">
-      <div class="summary-box invested-box">
-        <h3>Total Invested</h3>
-      <p>{{ user_currency }}{{ total_invested }}</p>
-      </div>
-      <div class="summary-box estimated-box">
-        <h3>Estimated Value</h3>
-        <p>{{ user_currency }}{{ total_estimated_value }}</p>
-      </div>
-      <div class="summary-box profit-box">
-        <h3>Total Profit / Loss</h3>
-        <p>{{ user_currency }}{{ total_profit }}</p>
-      </div>
-    </div> {% endcomment %}
-    <!-- Overall Investments Summary -->
+
             <div class="card" style="margin-bottom:20px; padding:20px;">
                 <h2 style="text-align:center;">📊 Overall Investments Summary</h2>
                 <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap;">
@@ -55,10 +40,7 @@
                         <h3>Total Invested Value</h3>
                         <p style="font-size:1.5em; color:#c97610;">{{ user_currency }}{{ total_invested }}</p>
                     </div>
-                    {% comment %} <div style="text-align:center; margin:10px;">
-                        <h3>Total Estimated Value</h3>
-                        <p style="font-size:1.5em; color:#00BFA6;">{{ user_currency }}{{ total_estimated_value }}</p>
-                    </div> {% endcomment %}
+                    
                     <div style="text-align:center; margin:10px;">
                         <h3>Overall Estimated Value</h3>
                         <p style="font-size:1.5em; color:#00BFA6;">{{ user_currency }}{{ total_overall_estimated }}</p>
@@ -92,7 +74,7 @@
                 </div>
             </div>
 
-    <!-- ✅ Investment Table -->
+
     <table>
       <thead>
         <tr>
@@ -126,17 +108,15 @@
       </tbody>
     </table>
 
-    <!-- 📈 Growth Over Time Chart -->
+>
     <section class="chart-section">
       <h2 style="text-align: center;">📈 Growth Over Time (Invested vs Estimated)</h2>
       <canvas id="growthChart" height="100"></canvas>
     </section>
 
-    <!-- 📊 Category Comparison Chart -->
     <section class="chart-section">
       <h2 style="text-align: center;">📊 Category Comparison (Investment Type)</h2>
 
-      <!-- ✅ Custom Legend -->
       <div class="chart-legend" style="justify-content: center;">
         <span class="legend-item" style="--color:#007bff;">Stock</span>
         <span class="legend-item" style="--color:#28a745;">Mutual Fund</span>
@@ -161,16 +141,16 @@
   </footer>
 
   <script>
-  // Detect theme from <body> or data-theme attribute
+
   const isDark = document.body.classList.contains('dark') || 
                  document.documentElement.getAttribute('data-theme') === 'dark';
 
-  // Define theme colors
+
   const axisColor = isDark ? '#e0e0e0' : '#333';
   const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
   const borderColor = isDark ? '#888' : '#333';
 
-  // --- 📈 Growth Over Time (Line Chart with 2 datasets) ---
+
   const ctx1 = document.getElementById('growthChart').getContext('2d');
   new Chart(ctx1, {
     type: 'line',
@@ -220,7 +200,6 @@
     }
   });
 
-  // --- 📊 Category Comparison (Bar Chart by Investment Type) ---
   const ctx3 = document.getElementById('categoryChart').getContext('2d');
 
   const categoryColors = {

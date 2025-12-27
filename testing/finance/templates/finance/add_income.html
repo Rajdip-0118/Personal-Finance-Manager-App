@@ -50,7 +50,7 @@
 <footer>{% include 'core/footer.html' %}</footer>
 
 <script>
-    //prediction of income
+
     document.addEventListener('DOMContentLoaded', function() {
         const nameField = document.getElementById('id_source');
         const categoryField = document.getElementById('id_category');
@@ -74,8 +74,7 @@
             }
         });
     });
-    //---------------------------------------------------------------------------
-    // Income Chart with Theming
+
     function getIncomeThemeColors() {
         const isDark = document.body.classList.contains("dark");
         return {
@@ -117,7 +116,7 @@
                             font: { size: 14 }
                         }
                     },
-                    title: {                       // ← Added chart header
+                    title: {                     
                         display: true,
                         text: "💰 Income Breakdown by Categories",
                         color: colors.text,
@@ -131,10 +130,10 @@
         });
     }
 
-    // initialize
+
     let incomeChart = createIncomeChart();
 
-    // re-render when theme changes
+ 
     document.addEventListener("themeChanged", () => {
         incomeChart.destroy();
         incomeChart = createIncomeChart();

@@ -1,6 +1,6 @@
 # investment/views.py
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP, getcontext
+from decimal import Decimal, ROUND_HALF_UP
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -11,12 +11,9 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from .models import Investment
 from .forms import InvestmentForm
-from finance.models import Income  # make sure finance app is in INSTALLED_APPS
 from .utils import get_expected_return_by_type
 from .utils_refresh import refresh_if_stale
 from django.http import JsonResponse
-from django.core.cache import cache
-from django.utils import timezone
 from budget.utils import check_budget_warnings
 from finance.models import Expense
 
@@ -40,17 +37,17 @@ def _to_decimal(value):
 def investment_list(request):
     filter_type = request.GET.get('filter', 'all')
 
-    # Base queryset
+
     investments = Investment.objects.filter(user=request.user).order_by('-id')
 
-    # Apply filters
+
     if filter_type == 'active':
         investments = investments.filter(status__iexact='Active')
     elif filter_type == 'completed':
         investments = investments.filter(status__iexact='Completed')        
     
-    # Pagination
-    paginator = Paginator(investments, 30)  # Show 30 investments per page
+
+    paginator = Paginator(investments, 30) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -69,7 +66,7 @@ def add_investment(request):
             inv.user = request.user
             today = timezone.now().date()
 
-            # Auto-manage status
+
             if inv.end_date and inv.end_date <= today:
                 inv.status = "Completed"
             else:
@@ -77,7 +74,7 @@ def add_investment(request):
 
             inv.save()
             messages.success(request, 'Investment added successfully.')
-            # 🔹 Trigger budget check with actual user request (enables popup)
+        
             try:
                 expense = Expense.objects.filter(user=request.user, investment=inv).first()
                 if expense:
@@ -87,7 +84,7 @@ def add_investment(request):
                 logging.warning(f"Budget check skipped: {e}")
             return redirect('investment_list')
         else:
-            # Display a clean message if invalid date range
+    
             if 'end_date' in form.errors and "End date must be after start date." in form.errors['end_date']:
                 messages.error(request, "⚠️ Please ensure the end date is after the start date.")
             else:
@@ -107,7 +104,7 @@ def edit_investment(request, id):
             inv = form.save(commit=False)
             today = timezone.now().date()
 
-            # ✅ Auto-update status based on date
+           
             if inv.end_date and inv.end_date <= today:
                 inv.status = "Completed"
             else:
@@ -115,7 +112,7 @@ def edit_investment(request, id):
 
             inv.save()
             messages.success(request, 'Investment updated successfully.')
-            # 🔹 Trigger budget check with actual user request (enables popup)
+   
             try:
                 expense = Expense.objects.filter(user=request.user, investment=inv).first()
                 if expense:
@@ -126,7 +123,7 @@ def edit_investment(request, id):
             return redirect('investment_list')
         
         else:
-            # Display a clean message if invalid date range
+
             if 'end_date' in form.errors and "End date must be after start date." in form.errors['end_date']:
                 messages.error(request, "⚠️ Please ensure the end date is after the start date.")
             else:
@@ -170,14 +167,11 @@ def investment_portfolio(request):
     total_overall_estimated = Decimal('0')
     total_overall_profit = Decimal('0')
 
-    # -------------------------------
-    # Compound Interest Calculation
-    # -------------------------------
+
     def calculate_compound_value(principal, annual_rate, start, end, investment_type, frequency=None):
         if not start or not end or annual_rate is None:
             return principal
 
-        # 🔧 Normalize rate to Decimal
         if not isinstance(annual_rate, Decimal):
             annual_rate = Decimal(str(annual_rate))
 
@@ -187,7 +181,6 @@ def investment_portfolio(request):
 
         years = Decimal(days) / Decimal('365')
 
-        # --- Default frequency by type ---
         type_based_freq = {
             'fd': 'Quarterly',
             'bond': 'Biannual',
@@ -202,18 +195,15 @@ def investment_portfolio(request):
             'other': 'Yearly',
         }
 
-        # --- Frequency mapping ---
+
         freq_map = {
-            # 'Daily': Decimal('365'),
-            # 'Weekly': Decimal('52'),
             'Monthly': Decimal('12'),
             'Quarterly': Decimal('4'),
             'Biannual': Decimal('2'),
             'Yearly': Decimal('1'),
-            #'Once': Decimal('1'),
         }
 
-        # --- Determine frequency ---
+
         investment_type_lower = investment_type.lower()
         auto_freq = type_based_freq.get(investment_type_lower, 'Yearly')
         final_frequency = frequency or auto_freq
@@ -222,51 +212,48 @@ def investment_portfolio(request):
         rate_per_period = (annual_rate / Decimal('100')) / comp_per_year
         periods = comp_per_year * years
 
-        # --- Calculation by type ---
+    
         if 'fd' in investment_type_lower:
-            # Fixed Deposit: compound, but allow flexible frequency
+          
             value = principal * ((Decimal('1') + rate_per_period) ** periods)
 
         elif 'rd' in investment_type_lower:
-            # Recurring Deposit: monthly contributions compounded monthly
+     
             months = int(years * 12)
             monthly_rate = (annual_rate / Decimal('100')) / Decimal('12')
             value = principal * (((Decimal('1') + monthly_rate) ** months - Decimal('1')) / monthly_rate)
 
         elif investment_type_lower in ['stock', 'mutual fund', 'etf', 'crypto']:
-            # Market-linked: annual compounding approximation
+         
             value = principal * ((Decimal('1') + (annual_rate / Decimal('100'))) ** years)
 
         elif 'bond' in investment_type_lower:
-            # Bond: flexible coupon compounding
+
             coupon_freq = freq_map.get(final_frequency, Decimal('2'))
             coupon_rate = (annual_rate / Decimal('100')) / coupon_freq
             value = principal * ((Decimal('1') + coupon_rate) ** (years * coupon_freq))
 
         elif 'pension' in investment_type_lower or 'other' in investment_type_lower:
-            # Pension/Other: simple if yearly, compound otherwise
+  
             if final_frequency.lower() == 'yearly':
                 value = principal * (Decimal('1') + (annual_rate / Decimal('100')) * years)
             else:
                 value = principal * ((Decimal('1') + rate_per_period) ** periods)
 
         elif 'real estate' in investment_type_lower or 'gold' in investment_type_lower:
-            # Real estate & gold usually appreciate linearly
+
             value = principal * (Decimal('1') + (annual_rate / Decimal('100')) * years)
 
         else:
-            # Fallback: general compounding
+
             value = principal * ((Decimal('1') + rate_per_period) ** periods)
 
         return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    # -------------------------------
-    # Main portfolio loop
-    # -------------------------------
-    REFRESH_INTERVAL_SECONDS = 3600  # 1 hour or 10s for testing
-    updated_any = False  # track if any investment was refreshed
+    REFRESH_INTERVAL_SECONDS = 3600  
+    updated_any = False
     for inv in investments:
-        # 🔄 Auto-refresh if stale (10s for testing)
+  
         if not inv.last_updated or (timezone.now() - inv.last_updated).total_seconds() >= REFRESH_INTERVAL_SECONDS:  
             if refresh_if_stale(inv):  
                 updated_any = True
@@ -298,17 +285,13 @@ def investment_portfolio(request):
             total_return_rate += expected_return
             valid_returns += 1
 
-        # ✅ Auto-complete investment (signals handle income creation)
         if inv.end_date and inv.end_date <= today and inv.status != "Completed":
             inv.status = "Completed"
             inv.save(update_fields=["status"])
             
-    # ✅ Single message after all refreshes
     if updated_any:
         messages.info(request, "📊 Live market values have been refreshed for your investments.")
-    # -------------------------------
-    # Averages and chart data
-    # -------------------------------
+
     avg_return = (total_return_rate / valid_returns).quantize(Decimal('0.01')) if valid_returns else Decimal('0')
 
     monthly_data_invested = {}
@@ -348,5 +331,3 @@ def investment_portfolio(request):
     }
 
     return render(request, "investment/investment_portfolio.html", context)
-
-

@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 </head>
 <body class="{% if user_theme == 'light' %}light{% else %}dark{% endif %}">
-    <!-- Popup Messages -->
+  
     <div id="popup-messages">
         {% if messages %}
             {% for message in messages %}
@@ -27,7 +27,7 @@
         {% include 'savings/sidebar.html' %}
         <main style="flex: 1;">
             <h1 class="page-title">💰 Savings Goals</h1>
-            <!-- Overall Goals Summary -->
+ 
             <div class="card" style="margin-bottom:20px; padding:20px;">
                 <h2 style="text-align:center;">📊 Overall Goals Summary</h2>
                 <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap;">
@@ -65,7 +65,7 @@
                     </div>
                 </div>
 
-                <!-- Overall Progress Bar -->
+   
                 <div style="margin-top:20px;">
                     <h3 style="text-align:center;">Overall Progress</h3>
                     <div style="background:#e0e0e0; border-radius:10px; overflow:hidden; height:25px; width:100%;">
@@ -81,14 +81,13 @@
                 </div>
             </div>
 
-            <!-- Manage Goals Card -->
             <div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
                 <h2>⚙️ Manage Saving Goals</h2>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
 
                     
 
-                    <!-- Filters inline -->
+         
                     <label style="display:flex; align-items:center; gap:4px; margin-left:10px;">
                         <input type="radio" name="filter" value="active" id="filter-active"
                             {% if filter_type == 'active' %}checked{% endif %}
@@ -104,16 +103,15 @@
                             {% if not filter_type or filter_type == 'all' %}checked{% endif %}
                             onchange="applyFilter(this.value)"> All Goals
                     </label>
-                    <!-- Add New Goal Button -->
+                 
                     <a href="{% url 'add_goal' %}"><button>➕ Add New Goal</button></a>
-                    <!-- Delete Selected Goals -->
+   
                     <form id="delete-selected-form" action="{% url 'delete_selected_goals' %}" method="post" style="margin:0; padding:0;">
                         {% csrf_token %}
                         <input type="hidden" name="selected_ids" id="selected-ids">
                         <button type="submit" class="delete-button" onclick="return confirm('Delete selected saving goals (refund balances)?')">🗑️ Delete Selected Goals</button>
                     </form>
 
-                    <!-- Delete All Goals -->
                     <form action="{% url 'delete_all_goals' %}" method="post" style="margin:0; padding:0;">
                         {% csrf_token %}
                         <button type="submit" class="delete-button" onclick="return confirm('Delete all saving goals (refund balances)?')">🗑️ Delete All Goals</button>
@@ -122,7 +120,6 @@
                 </div>
             </div>
 
-            <!-- Goals Table -->
             <table>
                 <thead>
                     <tr>
@@ -147,7 +144,6 @@
                         <td>{{ user_currency }}{{ goal.target_amount }}</td>
                         <td>{{ user_currency }}{{ goal.current_amount }}</td>
 
-                        <!-- Progress Display -->
                         <td>
                             <div class="progress-container">
                                 <div class="progress-bar 
@@ -162,10 +158,8 @@
                             </div>
                         </td>
 
-                        <!-- Deadline -->
                         <td>{{ goal.deadline|default:"N/A" }}</td>
 
-                        <!-- Probability -->
                         <td style="text-align:center; font-weight:bold;">
                             
                             {% if goal.is_numeric_prob %}
@@ -176,13 +170,10 @@
                         </td>
 
 
-
-                        <!-- Suggested Deadline -->
                         <td style="text-align:center;">
                             {{ goal.suggested_deadline }}
                         </td>
 
-                        <!-- Actions -->
                         <td class="action-buttons">
                             <a href="{% url 'edit_goal' goal.id %}">
                                 <button class="edit-button">Edit</button>
@@ -202,7 +193,6 @@
                 </tbody>
             </table>
 
-            <!-- Pagination -->
             <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0; flex-wrap:nowrap; gap:15px;">
                 <div style="white-space:nowrap; font-weight:bold; color:var(--text-color);">
                     <h2>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</h2>
@@ -237,7 +227,6 @@
             </div>
 
 
-            <!-- Progress Chart -->
             <div class="card">
                 <h2 style="text-align:center;">📊 Goal Progress Overview</h2>
                 <canvas id="progressChart"></canvas>
@@ -254,7 +243,7 @@
     <footer>{% include 'core/footer.html' %}</footer>
 
     <script>
-        //Apply filter function
+
         function applyFilter(value) {
                     const params = new URLSearchParams(window.location.search);
                     if(value === 'all') {
@@ -262,21 +251,20 @@
                     } else {
                         params.set('filter', value);
                     }
-                    params.set('page', 1); // reset to first page
+                    params.set('page', 1);
                     window.location.search = params.toString();
                 }
-        // Delete selected goals (refund)
+
         document.getElementById("delete-selected-form").addEventListener("submit", function (e) {
             const ids = Array.from(document.querySelectorAll(".row-checkbox:checked")).map(cb => cb.dataset.goalId);
             document.getElementById("selected-ids").value = ids.join(",");
         });
 
-        // Select/Deselect all checkboxes
         document.getElementById("select-all").addEventListener("change", function() {
             document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = this.checked);
         });
 
-        // Chart.js
+
         const labels = {{ labels|safe }};
         const progress = {{ progress|safe }};
         const backgroundColors = progress.map(val => {

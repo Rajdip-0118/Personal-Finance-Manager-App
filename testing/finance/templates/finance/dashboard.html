@@ -147,7 +147,7 @@
 <footer>{% include 'core/footer.html' %}</footer>
 
 
-<!-- SCRIPTS (UNCHANGED EXCEPT FOR HEIGHT SUPPORT) -->
+
 <script>
 
     function toggleUpload() {
@@ -157,14 +157,12 @@
         arrow.classList.toggle('rotate', isOpen);
     }
 
-    // Marquee animation duration based on text width
     window.addEventListener("load", function() {
     const marquee = document.getElementById("marquee-text");
-    const textWidth = marquee.offsetWidth; // pixel width of text
+    const textWidth = marquee.offsetWidth; 
     const containerWidth = marquee.parentElement.offsetWidth;
 
-    // duration formula → longer text = longer duration
-    const duration = (textWidth + containerWidth) / 35; // tweak "35" for speed factor
+    const duration = (textWidth + containerWidth) / 35; 
 
     marquee.style.animationDuration = duration + "s";
     });
@@ -235,7 +233,7 @@
 
         const newType = (type === 'area') ? 'line' : type;
 
-        // --- FIX: Pie vs Donut switching ---
+     
         if (chartId === "categoryExpenseChart") {
             if (type === "pie") {
                 chart.config.options.cutout = "0%";  
@@ -390,7 +388,7 @@
             }
         });
     })();
-    // --- After all charts have been created ---
+
     Object.values(chartInstances).forEach(chart => {
         new ResizeObserver(() => {
             chart.resize();

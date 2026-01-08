@@ -1,17 +1,16 @@
-# personal-financial-manager
-PFM (Personal Financial Manager) is a Django web application to manage personal income and expenses with charts and forecasts.
+# Personal Finance Manager App
 
-## 🌿 Branch Roles & Responsibilities
+Personal Finance Manager App is a Django web application that helps users track and manage personal income and expenses. It includes basic machine learning features for forecasting financial trends.
 
-| Branch Name            | Description                               |
-|------------------------|-------------------------------------------|
-| `main`                 | 🔁 Main production-ready branch           |
-| `branch-auth`          | 🔐 Handles login, register, logout views  |
-| `branch-finance`       | 💰 Income & expense tracking module       |
-| `branch-budget`        | 📊 Monthly budget planning features       |
-| `branch-savings`       | 💸 Savings goal tracker and analytics     |
-| `branch-reports`       | 📄 Export and reporting module (PDF/CSV)  |
-| `branch-docs`          | 📚 College docs: Report, PPT, Screenshots |
-| `branch-ai-ml`         | 🤖 Machine Learning & AI: model integration and predictions         |
+# Features
+- User registration and login
+- Add, view, and categorize income and expenses
+- Expense/income analytics and charts
+- Basic machine learning-based forecasts (optional)
 
-> Everyone should work on their assigned branch and create pull requests to merge into `main`.
+# Tech Stack
+- Backend: Django (Python)
+- Frontend: Django Templates (HTML, CSS, JavaScript)
+- Database: SQLite (Django ORM)
+- Tools: Git
+

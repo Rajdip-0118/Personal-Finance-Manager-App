@@ -6,7 +6,7 @@ Personal Finance Manager App is a Django web application that helps users track 
 - User registration and login
 - Add, view, and categorize income and expenses
 - Expense/income analytics and charts
-- Basic machine learning-based forecasts (optional)
+- Basic machine learning-based forecasts and classification
 
 # Tech Stack
 - Backend: Django (Python)
